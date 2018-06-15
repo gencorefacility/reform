@@ -67,6 +67,8 @@ def main():
 	with open(in_arg.ref_gff, "r") as f:
 		for line in f:
 			if line.startswith("#"):
+				## TODO: need to update the chromosome coordinates too (to include new sequence in chrom)
+				## both in the header, and first row/feature of that chrom
 				gff_out.write(line)
 			else:
 				line = re.sub("\s\s+" , "\t", line)
@@ -77,49 +79,21 @@ def main():
 					gff_out.write(line)
 				else:
 					if not in_gff_lines_appended:
-						
 						for l in in_gff_lines:
 							gff_out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l[0], l[1], l[2], int(l[3]) + position - 1, int(l[4]) + position - 1, l[5], l[6], l[7], l[8]))
 						in_gff_lines_appended = True
 					gff_out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(line_elements[0], line_elements[1], line_elements[2], int(line_elements[3]) + len(str(record.seq)), int(line_elements[4]) + len(str(record.seq)), line_elements[5], line_elements[6], line_elements[7], line_elements[8]))
 	gff_out.close()			
 	print("New GFF file created: ", gff_out.name)
-					
-	i='''
-	## Make new gff record for inserted_seq
-	new_record = SeqRecord(Seq(inserted_seq, generic_dna), seq.id)
-	qualifiers = {"source": "Custom", "ID": inserted_seq_name}
-	top_feature = SeqFeature(FeatureLocation(index + len(upstream), index + len(upstream) + len(inserted_seq)), type="gene", strand=1, qualifiers=qualifiers)
-	new_record.features = [top_feature]
-	
-	## Create new gff file
-	gff_out = open(ref_gff.replace('.gff', '_reform.gff'), "w")
-	new_record_created = False
-	with open(ref_gff, "r") as f:
-		for rec in gff.parse(f, target_lines=1):
-			if rec.gff_id != seq_id or rec.start < index + len(upstream):
-				gff.write([rec], gff_out)
-			else:
-				if not new_record_created:
-					gff.write([new_record], gff_out)
-					new_record_created = True
-				modified_record = rec
-				modified_record.start = rec.start + len(inserted_seq)
-				modified_record.end = rec.end + len(inserted_seq)
-				gff.write([rec], gff_out)
-	gff_out.close()
-	'''
 	
 def get_input_args():
 	parser = argparse.ArgumentParser()
 	
 	parser.add_argument('--chrom', type = str, required = True,
 					help = "Chromosome name (String)") 
-	parser.add_argument('--in_fasta', type = str, 
-					default = "../reform_files/new.fa", 
+	parser.add_argument('--in_fasta', type = str, required = True,
 					help = "Path to new sequence to be inserted into reference genome in fasta format") 
-	parser.add_argument('--in_gff', type = str, 
-					default = "../reform_files/new.gff", 
+	parser.add_argument('--in_gff', type = str, required = True,
 					help = "Path to GFF file describing new fasta sequence to be inserted") 
 	parser.add_argument('--upstream', type = str, default = None, 
 					help = "Upstream sequence. Either position, or upstream AND downstream sequence must be provided.")
@@ -127,10 +101,9 @@ def get_input_args():
 					help = "Downstream sequence. Either position, or upstream AND downstream sequence must be provided.")
 	parser.add_argument('--position', type = int, default = None,
 					help = "Position at which to insert new sequence. Either position, or upstream AND downstream sequence must be provided.") 
-	parser.add_argument('--ref_fasta', type = str, default = "../reform_files/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa",
+	parser.add_argument('--ref_fasta', type = str, required = True,
 					help = "Path to reference fasta file")
-	parser.add_argument('--ref_gff', type = str, 
-					default = "../reform_files/Saccharomyces_cerevisiae.R64-1-1.34.gff3",
+	parser.add_argument('--ref_gff', type = str, required = True,
 					help = "Path to reference gff file") 
 					
 	in_args = parser.parse_args()
