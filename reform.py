@@ -1,5 +1,6 @@
 #module load biopython/intel/1.70
 import argparse
+import re
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -7,6 +8,7 @@ from Bio.Alphabet import generic_dna
 
 #chrom = "I"
 #inserted_fasta = "../reform_files/new.fa"
+#inserted_gff = "../reform_files/new.gff"
 #upstream = "CATCCTAACACTACCCTAACACAGCCCTAATCTAACCCTGGCCAACCTGTCTCTCAACTT"
 #downstream = "ACCCTCCATTACCCTGCCTCCACTCGTTACCCTGTCCCATTCAACCATACCACTCCGAAC"
 #ref_fasta = "../reform_files/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa"
@@ -36,20 +38,59 @@ def main():
 	new_record = SeqRecord(Seq(new_seq, generic_dna), id=seq.id, description=seq.description)
 	
 	## Create new fasta file with modified chromosome 
-	with open(in_arg.ref_fasta.replace('.fa', '_reform.fa'), "w") as f:
+	new_fasta = in_arg.ref_fasta.replace('.fa', '_reform.fa')
+	with open(new_fasta, "w") as f:
 		for s in chrom_seqs:
 			if s == seq.id:
 				SeqIO.write([new_record], f, "fasta")
 			else:
 				SeqIO.write([chrom_seqs[s]], f, "fasta")
+				
+	print("New fasta file created: ", new_fasta)
+	print("Preparing to create new GFF file")
 	
+	## Create new gff file
+	with open(in_arg.in_gff, "r") as f:
+		in_gff_lines = []
+		for line in f:
+			# convert spaces to tabs
+			line = re.sub("\s\s+" , "\t", line)
+			line_elements = line.split('\t')
+			if len(line_elements) != 9:
+				print("** ERROR: GFF file does not have 9 columns, it has", len(line_elements))
+				print(line_elements)
+				exit()
+			in_gff_lines.append(line_elements)
+	
+	gff_out = open(in_arg.ref_gff.replace('.gff', '_reform.gff'), "w")
+	in_gff_lines_appended = False
+	with open(in_arg.ref_gff, "r") as f:
+		for line in f:
+			if line.startswith("#"):
+				gff_out.write(line)
+			else:
+				line = re.sub("\s\s+" , "\t", line)
+				line_elements = line.split('\t')
+				gff_chrom_id = line_elements[0]
+				gff_feat_start = int(line_elements[3])
+				if gff_chrom_id != seq.id or gff_feat_start < position:
+					gff_out.write(line)
+				else:
+					if not in_gff_lines_appended:
+						
+						for l in in_gff_lines:
+							gff_out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l[0], l[1], l[2], int(l[3]) + position - 1, int(l[4]) + position - 1, l[5], l[6], l[7], l[8]))
+						in_gff_lines_appended = True
+					gff_out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(line_elements[0], line_elements[1], line_elements[2], int(line_elements[3]) + len(str(record.seq)), int(line_elements[4]) + len(str(record.seq)), line_elements[5], line_elements[6], line_elements[7], line_elements[8]))
+	gff_out.close()			
+	print("New GFF file created: ", gff_out.name)
+					
 	i='''
 	## Make new gff record for inserted_seq
 	new_record = SeqRecord(Seq(inserted_seq, generic_dna), seq.id)
 	qualifiers = {"source": "Custom", "ID": inserted_seq_name}
 	top_feature = SeqFeature(FeatureLocation(index + len(upstream), index + len(upstream) + len(inserted_seq)), type="gene", strand=1, qualifiers=qualifiers)
 	new_record.features = [top_feature]
-	
 	
 	## Create new gff file
 	gff_out = open(ref_gff.replace('.gff', '_reform.gff'), "w")
@@ -77,6 +118,9 @@ def get_input_args():
 	parser.add_argument('--in_fasta', type = str, 
 					default = "../reform_files/new.fa", 
 					help = "Path to new sequence to be inserted into reference genome in fasta format") 
+	parser.add_argument('--in_gff', type = str, 
+					default = "../reform_files/new.gff", 
+					help = "Path to GFF file describing new fasta sequence to be inserted") 
 	parser.add_argument('--upstream', type = str, default = None, 
 					help = "Upstream sequence. Either position, or upstream AND downstream sequence must be provided.")
 	parser.add_argument('--downstream', type = str, default = None, 
@@ -107,9 +151,9 @@ def get_position(position, upstream, downstream, chrom, seq_str):
 	if position is not None and position >= 0:
 		print("Checking position validity")
 		if position > len(seq_str):
-				print("** ERROR: Position greater than length of chromosome.")
-				print("Chromosome: {}\Chromosome length: {}\nPosition: \n{}".format(chrom, len(seq_str), position))
-				exit()
+			print("** ERROR: Position greater than length of chromosome.")
+			print("Chromosome: {}\Chromosome length: {}\nPosition: \n{}".format(chrom, len(seq_str), position))
+			exit()
 		else:
 			print("Position valid")
 	else:
