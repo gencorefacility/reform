@@ -38,7 +38,7 @@ def main():
 	new_record = SeqRecord(Seq(new_seq, generic_dna), id=seq.id, description=seq.description)
 	
 	## Create new fasta file with modified chromosome 
-	new_fasta = in_arg.ref_fasta.replace('.fa', '_reform.fa')
+	new_fasta = 'reformed.fa'
 	with open(new_fasta, "w") as f:
 		for s in chrom_seqs:
 			if s == seq.id:
