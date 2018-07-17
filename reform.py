@@ -171,10 +171,11 @@ def get_position(position, upstream, downstream, chrom, seq_str):
 	else:
 		print("No valid position specified, checking for upstream and downstream sequence")
 		if upstream is not None and downstream is not None:
+			seq_str = seq_str.upper()
 			upstream_fasta = list(SeqIO.parse(upstream, "fasta"))
-			upstream_seq = str(upstream_fasta[0].seq)
+			upstream_seq = str(upstream_fasta[0].seq).upper()
 			downstream_fasta = list(SeqIO.parse(downstream, "fasta"))
-			downstream_seq = str(downstream_fasta[0].seq)
+			downstream_seq = str(downstream_fasta[0].seq).upper()
 			# Ensure the upstream and downstream target sequences exists
 			# once in the selected chromosome, else die
 			upstream_seq_count = seq_str.count(upstream_seq)
