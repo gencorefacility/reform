@@ -1,4 +1,4 @@
-#module load biopython/intel/1.70
+#module load biopython/intel/python3.6/1.72
 #python3 reform.py --chrom="I" --upstream_fasta="data/up.fa" --downstream_fasta="data/down.fa" --in_fasta="data/new.fa" --in_gff="data/new.gff" --ref_fasta="data/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa" --ref_gff="data/Saccharomyces_cerevisiae.R64-1-1.34.gff3"
 
 import argparse
@@ -31,11 +31,14 @@ def main():
 		exit()
 	if position != down_position:
 		print("Removing nucleotodes from position {} - {}".format(position, down_position - 1))
-	print("Proceeding to insert {} at position {}".format("inserted_fasta", position))
+	print("Proceeding to insert sequence '{}' from {} at position {}".format(record.description, in_arg.in_fasta, position))
 	
 	## Build the new chromosome sequence with the inserted_seq 
+	## If the chromosome sequence length is in the header, replace it with new length
 	new_seq = seq_str[:position] + str(record.seq) + seq_str[down_position:]
-	new_record = SeqRecord(Seq(new_seq, generic_dna), id=seq.id, description=seq.description)
+	chrom_length = str(len(seq_str))
+	new_length = str(len(new_seq))
+	new_record = SeqRecord(Seq(new_seq, generic_dna), id=seq.id, description=seq.description.replace(chrom_length, new_length))
 	
 	## Create new fasta file with modified chromosome 
 	new_fasta = 'reformed.fa'
@@ -49,7 +52,7 @@ def main():
 	print("New fasta file created: ", new_fasta)
 	print("Preparing to create new GFF file")
 	
-	## Create new gff file
+	## Read in new GFF features from in_gff
 	with open(in_arg.in_gff, "r") as f:
 		in_gff_lines = []
 		for line in f:
@@ -62,7 +65,9 @@ def main():
 				exit()
 			in_gff_lines.append(line_elements)
 	
-	gff_out = open(in_arg.ref_gff.replace('.gff', '_reform.gff'), "w")
+	## Create new gff file
+	new_gff = 'reformed.gff'
+	gff_out = open(new_gff, "w")
 	in_gff_lines_appended = False
 	split_features = []
 	with open(in_arg.ref_gff, "r") as f:
@@ -73,7 +78,6 @@ def main():
 					original_length = int(line_elements[3])
 					new_length = original_length - (down_position - position) + len(str(record.seq))
 					line = line.replace(str(original_length), str(new_length))
-				
 				gff_out.write(line)
 			else:
 				line = re.sub("\s\s+" , "\t", line)
@@ -95,7 +99,8 @@ def main():
 					# split feature into 2
 					gff_out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(line_elements[0], line_elements[1], line_elements[2], int(line_elements[3]), position, line_elements[5], line_elements[6], line_elements[7], line_elements[8] + ";reform_comment=original feature split by inserted sequence, this is the 5' end"))
 					# the downstream flank(s) will be added immediately after the in_gff features are written
-					split_features.append("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(line_elements[0], line_elements[1], line_elements[2], position + len(str(record.seq)) + 1, int(line_elements[4]) + len(str(record.seq)), line_elements[5], line_elements[6], line_elements[7], line_elements[8] + ";reform_comment=original feature split by inserted sequence, this is the 3' end"))
+					renamed_id_attributes = rename_id(line)
+					split_features.append("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(line_elements[0], line_elements[1], line_elements[2], position + len(str(record.seq)) + 1, int(line_elements[4]) + len(str(record.seq)), line_elements[5], line_elements[6], line_elements[7], renamed_id_attributes + ";reform_comment=original feature split by inserted sequence, this is the 3' end"))
 				elif gff_feat_start < position and gff_feat_end > position and gff_feat_end < down_position:
 					print("Feature cut off - 3' side (downstream side) of feature cut off")
 					# change end position of feature to cut off point (position)
@@ -120,7 +125,6 @@ def main():
 					else:
 						print("** Error: Unknown case for GFF modification. Exiting")
 						exit()
-					
 	gff_out.close()			
 	print("New GFF file created: ", gff_out.name)
 	
@@ -195,6 +199,16 @@ def get_position(position, upstream, downstream, chrom, seq_str):
 			print("** ERROR: You must specify a valid position or upstream and downstream sequences.")
 			exit()
 	return {'position': position, 'down_position': down_position}
+	
+def rename_id(line):
+	attributes = line.split('\t')[8]
+	elements = attributes.split(';')
+	if elements[0].startswith("ID="):
+		print("Renaming split feature {} --> {}, {}_split".format(elements[0], elements[0], elements[0]))
+		return ("{}_split;{}".format(elements[0], ';'.join(elements[1:])))
+	else:
+		print("This feature will not be renamed because it does not has an ID attribute:\n", line)
+		return attributes
 	
 #call to main function to run the program
 if __name__ == "__main__":
