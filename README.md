@@ -2,19 +2,19 @@
 
 *ref*orm is a python-based command line tool that allows for fast, easy and robust editing of reference genome sequence and annotation files.
 
-Execution of reform requires a reference sequence (fasta), reference annotation (GFF or GTF), the novel sequences to be added (fasta), and corresponding novel annotations (GFF or GTF). A user provides as arguments the name of the modified chromosome and either the position at which the novel sequence is inserted, or the upstream and downstream sequences flanking the novel sequences. This results in the addition and/or deletion of sequence from the reference in the modified fasta file. In addition to the novel annotations, any changes to the reference annotations that result from deleted or interrupted sequence are incorporated into the modified gff.  Importantly, modified gff and fasta files include a record of the modifications.
+Execution of *ref*orm requires a reference sequence (fasta), reference annotation (GFF or GTF), the novel sequences to be added (fasta), and corresponding novel annotations (GFF or GTF). A user provides as arguments the name of the modified chromosome and either the position at which the novel sequence is inserted, or the upstream and downstream sequences flanking the novel sequences. This results in the addition and/or deletion of sequence from the reference in the modified fasta file. In addition to the novel annotations, any changes to the reference annotations that result from deleted or interrupted sequence are incorporated into the modified gff.  Importantly, modified gff and fasta files include a record of the modifications.
 
 ## Instructions
 
 *ref*orm requires Python3 and Biopython. 
 
-Install biopython like this if you don't already have it:
+Install biopython if you don't already have it:
 
 `pip install biopython`
 
 ## Usage
 
-Simply invoke the python script:
+Invoke the python script:
 
 ```
 python3 reform.py 
