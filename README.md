@@ -46,7 +46,8 @@ python3 reform.py
 
 ## Example
 
-```python3 reform.py 
+```
+python3 reform.py 
   --chrom="I" \
   --upstream_fasta="data/up.fa" \
   --downstream_fasta="data/down.fa" \
