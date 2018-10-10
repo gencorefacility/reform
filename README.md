@@ -4,15 +4,13 @@
 
 Execution of *ref*orm requires a reference sequence (fasta), reference annotation (GFF or GTF), the novel sequences to be added (fasta), and corresponding novel annotations (GFF or GTF). A user provides as arguments the name of the modified chromosome and either the position at which the novel sequence is inserted, or the upstream and downstream sequences flanking the novel sequences. This results in the addition and/or deletion of sequence from the reference in the modified fasta file. In addition to the novel annotations, any changes to the reference annotations that result from deleted or interrupted sequence are incorporated into the modified gff.  Importantly, modified gff and fasta files include a record of the modifications.
 
-## Instructions
+## Usage
 
 *ref*orm requires Python3 and Biopython. 
 
 Install biopython if you don't already have it:
 
 `pip install biopython`
-
-## Usage
 
 Invoke the python script:
 
@@ -61,5 +59,5 @@ python3 reform.py
 
 `reformed.fa` Modified fasta file.
 
-`reformed.gff` Modified GFF file.
+`reformed.gff3` Modified GFF file.
 
