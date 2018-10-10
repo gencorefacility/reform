@@ -216,7 +216,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					write_gff(gff_out, line_elements, end = position, comment = gff_comments + ";reform_comment=original feature split by inserted sequence, this is the 5 prime end")
 					# the downstream flank(s) will be added immediately after the in_gff features are written
 					renamed_id_attributes = rename_id(line)
-					split_features.append((line, position + new_seq_length + 1, int(line_elements[4]) + new_seq_length, renamed_id_attributes + ";reform_comment=original feature split by inserted sequence, this is the 3 prime end"))
+					split_features.append((line_elements, position + new_seq_length + 1, int(line_elements[4]) + new_seq_length, renamed_id_attributes + ";reform_comment=original feature split by inserted sequence, this is the 3 prime end"))
 				elif gff_feat_start < position and gff_feat_end > position and gff_feat_end <= down_position:
 					# change end position of feature to cut off point (position)
 					print("Feature cut off - 3 prime side (downstream side) of feature cut off")
@@ -231,7 +231,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 							write_gff(gff_out, l, start = int(l[3]) + position, end = int(l[4]) + position)
 						in_gff_lines_appended = True
 						for sf in split_features:
-							write_gff(gff_out, sf[0], start = sf[1], end = sf[2], comment = sf[4])
+							write_gff(gff_out, sf[0], start = sf[1], end = sf[2], comment = sf[3])
 					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end > down_position:
 						# change start position of feature to after cutoff point
 						print("Feature cut off - 5 prime side (upstream side) of feature cut off")
@@ -269,10 +269,10 @@ def rename_id(line):
 	Given a gff line, this function will append the string "_split" 
 	to the end of the ID attribute
 	'''
-	attributes = line.split('\t')[8]
+	attributes = line.split('\t')[8].strip()
 	elements = attributes.split(';')
 	if elements[0].startswith("ID="):
-		print("Renaming split feature {} --> {}, {}_split".format(elements[0], elements[0], elements[0]))
+		print("Renaming split feature {} --> {}_split".format(elements[0], elements[0]))
 		return ("{}_split;{}".format(elements[0], ';'.join(elements[1:])))
 	else:
 		print("This feature will not be renamed because it does not has an ID attribute:\n", line)
