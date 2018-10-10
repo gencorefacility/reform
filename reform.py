@@ -1,6 +1,3 @@
-#module load biopython/intel/python3.6/1.72
-#python3 reform.py --chrom="I" --upstream_fasta="data/up.fa" --downstream_fasta="data/down.fa" --in_fasta="data/new.fa" --in_gff="data/new.gff" --ref_fasta="data/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa" --ref_gff="data/Saccharomyces_cerevisiae.R64-1-1.34.gff3"
-
 import argparse
 import re
 from Bio import SeqIO
@@ -28,7 +25,7 @@ def main():
 	down_position = positions['down_position']
 	if position != down_position:
 		print("Removing nucleotodes from position {} - {}".format(position, down_position - 1))
-	print("Proceeding to insert sequence '{}' from {} at position {}".format(record.description, in_arg.in_fasta, position))
+	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}".format(record.description, in_arg.in_fasta, position, in_arg.chrom))
 	
 	## Build the new chromosome sequence with the inserted_seq 
 	## If the chromosome sequence length is in the header, replace it with new length
@@ -47,15 +44,16 @@ def main():
 				SeqIO.write([chrom_seqs[s]], f, "fasta")
 				
 	print("New fasta file created: ", new_fasta)
-	print("Preparing to create new GFF file")
+	print("Preparing to create new annotation file")
 	
 	## Read in new GFF features from in_gff
 	in_gff_lines = get_in_gff_lines(in_arg.in_gff)
 	
 	## Create new gff file
-	new_gff_name = 'reformed.gff'
+	annotation_ext = in_arg.ref_gff.split('.')[-1]
+	new_gff_name = 'reformed.' + annotation_ext
 	new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
-	print("New GFF file created: ", new_gff.name)
+	print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
 	
 def write_gff(gff_out, elements, start=None, end=None, comment=None):
 	'''
@@ -63,7 +61,7 @@ def write_gff(gff_out, elements, start=None, end=None, comment=None):
 	end position, and comment column. 
 	
 	gff_out: an open file handle for writing new gff lines to
-	elements: a list containing each column of a single feature line in a gff file
+	elements: a list containing each column (9 in total) of a single feature line in a gff file
 	start: if provided, overwrite the start position in elements with this start position
 	end: if provided, overwrite the end position in elements with this end position
 	comment: if provided, overwrite the comments column in elements with this comment
@@ -108,15 +106,18 @@ def get_position(position, upstream, downstream, chrom, seq_str):
 	Note that either position, or upstream AND downstream sequences must
 	be provided.
 	'''
-	if position is not None and position >= 0:
+	if position is not None and position >= -1:
 		print("Checking position validity")
 		if position > len(seq_str):
 			print("** ERROR: Position greater than length of chromosome.")
 			print("Chromosome: {}\Chromosome length: {}\nPosition: \n{}".format(chrom, len(seq_str), position))
 			exit()
-		else:
-			down_position = position
-			print("Position valid")
+		elif position == -1:
+			position = len(seq_str)
+		# At the moment we don't accept down position as a param
+		# so set down_position = position
+		down_position = position
+		print("Position valid")
 	else:
 		print("No valid position specified, checking for upstream and downstream sequence")
 		if upstream is not None and downstream is not None:
@@ -167,6 +168,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	gff_out = open(new_gff_name, "w")
 	in_gff_lines_appended = False
 	split_features = []
+	last_seen_chrom_id = None
 	with open(ref_gff, "r") as f:
 		for line in f:
 			line_elements = line.split()
@@ -184,7 +186,23 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				gff_feat_type = line_elements[2]
 				gff_comments = line_elements[8]
 				
-				if gff_chrom_id != chrom_id or gff_feat_end <= position:
+				# If we've seen at least one chromosome
+				# and the last chromosome seen was the chromosome of interest (i.e. chrom_id)
+				# and now we're on a new chromosome in the original gff file
+				# and the in_gff_lines have not yet been appended:
+				# we assume they need to be appended to the end of the chromosome
+				# so append them before proceeding
+				if (last_seen_chrom_id is not None
+					and last_seen_chrom_id == chrom_id
+					and gff_chrom_id != last_seen_chrom_id 
+					and not in_gff_lines_appended):
+					for l in in_gff_lines:
+						write_gff(gff_out, l, start = int(l[3]) + position, end = int(l[4]) + position)
+					in_gff_lines_appended = True
+				
+				last_seen_chrom_id = gff_chrom_id
+				
+				if gff_chrom_id != chrom_id or gff_feat_end < position:
 					gff_out.write(line)
 				elif gff_feat_type in ['chromosome', 'region']:
 					# modify length of chromosome
@@ -223,6 +241,26 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						print("** Error: Unknown case for GFF modification. Exiting")
 						exit()
+						
+		# If we've iterated over the entire original gff
+		# (i.e. out of the for loop which iterates over it)
+		# and still haven't written in_gff_lines
+		# and the last chromosome seen was the chromosome of interest (i.e. chrom_id):
+		# we assume they need to be appended to the end of the genome
+		# (i.e. end of the last chromosome)
+		# so append them now
+		if (last_seen_chrom_id is not None 
+			and last_seen_chrom_id == chrom_id
+			and not in_gff_lines_appended):
+			for l in in_gff_lines:
+				write_gff(gff_out, l, start = int(l[3]) + position, end = int(l[4]) + position)
+			in_gff_lines_appended = True
+		
+		# Checking to ensure in_gff_lines written
+		if not in_gff_lines_appended:
+			print("** Error: Something went wrong, in_gff not added to reference gff. Exiting")
+			exit()
+		
 	gff_out.close()	
 	return gff_out
 	
@@ -269,5 +307,3 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
-
-
