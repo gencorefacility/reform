@@ -87,7 +87,7 @@ def get_in_gff_lines(in_gff):
 	with open(in_gff, "r") as f:
 		in_gff_lines = []
 		for line in f:
-			line_elements = line.split()
+			line_elements = line.split('\t')
 			# Skip comment lines
 			if line.startswith("#"):
 				continue
@@ -171,7 +171,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	last_seen_chrom_id = None
 	with open(ref_gff, "r") as f:
 		for line in f:
-			line_elements = line.split()
+			line_elements = line.split('\t')
 			if line.startswith("#"):
 				if line_elements[0] == "##sequence-region" and line_elements[1] == chrom_id:
 					# Edit the length of the chromosome 
@@ -217,7 +217,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					# the downstream flank(s) will be added immediately after the in_gff features are written
 					renamed_id_attributes = rename_id(line)
 					split_features.append((line_elements, position + new_seq_length + 1, int(line_elements[4]) + new_seq_length, renamed_id_attributes + ";reform_comment=original feature split by inserted sequence, this is the 3 prime end"))
-				elif gff_feat_start < position and gff_feat_end > position and gff_feat_end <= down_position:
+				elif gff_feat_start < position and gff_feat_end >= position and gff_feat_end <= down_position:
 					# change end position of feature to cut off point (position)
 					print("Feature cut off - 3 prime side (downstream side) of feature cut off")
 					write_gff(gff_out, line_elements, end = position, comment = gff_comments + ";reform_comment=3 prime side of feature cut-off by inserted sequence")
@@ -232,14 +232,14 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						in_gff_lines_appended = True
 						for sf in split_features:
 							write_gff(gff_out, sf[0], start = sf[1], end = sf[2], comment = sf[3])
-					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end > down_position:
+					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end >= down_position:
 						# change start position of feature to after cutoff point
 						print("Feature cut off - 5 prime side (upstream side) of feature cut off")
 						write_gff(gff_out, line_elements, start = position + new_seq_length + 1, end = gff_feat_end + new_seq_length - (down_position - position), comment = gff_comments + ";reform_comment=5 prime side of feature cut-off by inserted sequence")
 					elif gff_feat_start > down_position:
 						write_gff(gff_out, line_elements, start = gff_feat_start + new_seq_length - (down_position - position), end = gff_feat_end + new_seq_length - (down_position - position))
 					else:
-						print("** Error: Unknown case for GFF modification. Exiting")
+						print("** Error: Unknown case for GFF modification. Exiting " + str(line_elements))
 						exit()
 						
 		# If we've iterated over the entire original gff
