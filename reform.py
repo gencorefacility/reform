@@ -24,7 +24,7 @@ def main():
 	position = positions['position']
 	down_position = positions['down_position']
 	if position != down_position:
-		print("Removing nucleotodes from position {} - {}".format(position, down_position - 1))
+		print("Removing nucleotides from position {} - {}".format(position, down_position - 1))
 	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}".format(record.description, in_arg.in_fasta, position, in_arg.chrom))
 	
 	## Build the new chromosome sequence with the inserted_seq 
