@@ -235,7 +235,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end >= down_position:
 						# change start position of feature to after cutoff point
 						print("Feature cut off - 5 prime side (upstream side) of feature cut off")
-						write_gff(gff_out, line_elements, start = position + new_seq_length + 1, end = gff_feat_end + new_seq_length - (down_position - position), comment = gff_comments + ";reform_comment=5 prime side of feature cut-off by inserted sequence")
+						write_gff(gff_out, line_elements, start = position + new_seq_length, end = gff_feat_end + new_seq_length - (down_position - position), comment = gff_comments + ";reform_comment=5 prime side of feature cut-off by inserted sequence")
 					elif gff_feat_start > down_position:
 						write_gff(gff_out, line_elements, start = gff_feat_start + new_seq_length - (down_position - position), end = gff_feat_end + new_seq_length - (down_position - position))
 					else:
