@@ -24,7 +24,7 @@ def main():
 	position = positions['position']
 	down_position = positions['down_position']
 	if position != down_position:
-		print("Removing nucleotides from position {} - {}".format(position, down_position - 1))
+		print("Removing nucleotides from position {} - {}".format(position, down_position))
 	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}".format(record.description, in_arg.in_fasta, position, in_arg.chrom))
 	
 	## Build the new chromosome sequence with the inserted_seq 
@@ -221,9 +221,9 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					# change end position of feature to cut off point (position)
 					print("Feature cut off - 3 prime side (downstream side) of feature cut off")
 					write_gff(gff_out, line_elements, end = position, comment = gff_comments + ";reform_comment=3 prime side of feature cut-off by inserted sequence")
-				elif gff_feat_start > position and gff_feat_end < down_position:
+				elif gff_feat_start > position and gff_feat_end <= down_position:
 					# skip this feature
-					print("Skip feature (removed from sequence)")
+					print("Skip feature (this feature was removed from sequence)")
 					continue
 				else:
 					if not in_gff_lines_appended:
@@ -232,7 +232,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						in_gff_lines_appended = True
 						for sf in split_features:
 							write_gff(gff_out, sf[0], start = sf[1], end = sf[2], comment = sf[3])
-					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end >= down_position:
+					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end > down_position:
 						# change start position of feature to after cutoff point
 						print("Feature cut off - 5 prime side (upstream side) of feature cut off")
 						write_gff(gff_out, line_elements, start = position + new_seq_length, end = gff_feat_end + new_seq_length - (down_position - position), comment = gff_comments + ";reform_comment=5 prime side of feature cut-off by inserted sequence")
