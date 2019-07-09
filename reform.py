@@ -55,10 +55,10 @@ def main():
 	new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 	print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
 	
-def write_gff(gff_out, elements, start=None, end=None, comment=None):
+def modify_gff_line(elements, start=None, end=None, comment=None):
 	'''
-	Modifies existing GFF lines. Currently, you can override the start position, 
-	end position, and comment column. 
+	Modifies an existing GFF line and returns the modified line. Currently, you can 
+	override the start position, end position, and comment column. 
 	
 	gff_out: an open file handle for writing new gff lines to
 	elements: a list containing each column (9 in total) of a single feature line in a gff file
@@ -75,8 +75,8 @@ def write_gff(gff_out, elements, start=None, end=None, comment=None):
 	if not comment.endswith('\n'):
 		comment += '\n'
 
-	## Write the line
-	gff_out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(elements[0], elements[1], elements[2], start, end, elements[5], elements[6], elements[7], comment))
+	## Return the modified line
+	return("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(elements[0], elements[1], elements[2], start, end, elements[5], elements[6], elements[7], comment))
 	
 def get_in_gff_lines(in_gff):
 	'''
@@ -93,7 +93,7 @@ def get_in_gff_lines(in_gff):
 				continue
 			# Ensure lines have 9 columns
 			if len(line_elements) != 9:
-				print("** ERROR: GFF file does not have 9 columns, it has", len(line_elements))
+				print("** ERROR: in_gff file does not have 9 columns, it has", len(line_elements))
 				print(line_elements)
 				exit()
 			in_gff_lines.append(line_elements)
@@ -147,19 +147,35 @@ def get_position(position, upstream, downstream, chrom, seq_str):
 		print("** ERROR: Upstream and Downstream sequences must not overlap. Exiting.")
 		exit()
 	return {'position': position, 'down_position': down_position}
+
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
+	for l in in_gff_lines:
+		new_gff_line = modify_gff_line(
+			l, start = int(l[3]) + position, end = int(l[4]) + position)
+		gff_out.write(new_gff_line)
 	
+	## If insertion caused any existing features to be split, add
+	## the split features now immediately after adding the new features
+	for sf in split_features:
+		modified_line = modify_gff_line(
+			sf[0], start = sf[1], end = sf[2], comment = sf[3])
+		gff_out.write(modified_line)
+		
+	## Return True after writing the new GFF lines
+	return True
+
+# Position argument that you give is 0-based, but co-ordinates in in_gff are 1 based, like regular gff -- this way everything works!
 def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position, chrom_id, new_seq_length):
 	'''
 	Goes line by line through a gff file to remove existing features 
-	(or parts of existing features) and insert new features where 
-	specified. In the process of adding new features, existing features 
+	(or parts of existing features) and/or insert new features. 
+	In the process of adding new features, existing features 
 	may be cut-off on either end or split into two. 
 	This attempts to handle all cases. 
-
 	new_gff_name: the name of the new gff file to create
 	ref_gff: the reference gff file to modify
 	in_gff_lines: a list of lists where each nested list is a list of 
-		columns (in gff format) associated with one new feature to insert
+		columns (in gff format) associated with each new feature to insert
 	position: start position of removal of existing sequence
 	down_position: end position of removal of existing sequence
 	chrom_id: the ID of the chromosome to modify
@@ -174,7 +190,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 			line_elements = line.split('\t')
 			if line.startswith("#"):
 				if line_elements[0] == "##sequence-region" and line_elements[1] == chrom_id:
-					# Edit the length of the chromosome 
+					## Edit the length of the chromosome 
 					original_length = int(line_elements[3])
 					new_length = original_length - (down_position - position) + new_seq_length
 					line = line.replace(str(original_length), str(new_length))
@@ -184,7 +200,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				gff_feat_start = int(line_elements[3])
 				gff_feat_end = int(line_elements[4])
 				gff_feat_type = line_elements[2]
-				gff_comments = line_elements[8]
+				gff_comments = line_elements[8].strip()
 				
 				# If we've seen at least one chromosome
 				# and the last chromosome seen was the chromosome of interest (i.e. chrom_id)
@@ -196,48 +212,102 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					and last_seen_chrom_id == chrom_id
 					and gff_chrom_id != last_seen_chrom_id 
 					and not in_gff_lines_appended):
-					for l in in_gff_lines:
-						write_gff(gff_out, l, start = int(l[3]) + position, end = int(l[4]) + position)
-					in_gff_lines_appended = True
+					in_gff_lines_appended = write_in_gff_lines(
+						gff_out, in_gff_lines, position, split_features)
 				
 				last_seen_chrom_id = gff_chrom_id
 				
-				if gff_chrom_id != chrom_id or gff_feat_end < position:
+				# If this is not the chromosome of interest
+				# Or if the current feature ends before any 
+				# modification (which occurs at position)
+				# Then simply write the feature as is (no modification)
+				# (remember gff co-ordinates are 1 based and position 
+				# is 0 based, therefor check less than *or equal to*)
+				if gff_chrom_id != chrom_id or gff_feat_end <= position:
 					gff_out.write(line)
+					
+				# Modify chromosome feature length (if feature is 
+				# "chromosome" or "region")
 				elif gff_feat_type in ['chromosome', 'region']:
-					# modify length of chromosome
 					original_length = gff_feat_end
 					new_length = original_length - (down_position - position) + new_seq_length
 					line = line.replace(str(original_length), str(new_length))
 					gff_out.write(line)
-				elif gff_feat_start < position and gff_feat_end > down_position:
-					# split feature into 2
+					
+				# Split feature into 2 if feature starts before position
+				# and ends after down_position
+				elif gff_feat_start <= position and gff_feat_end > down_position:
 					print("Feature split")
-					write_gff(gff_out, line_elements, end = position, comment = gff_comments + ";reform_comment=original feature split by inserted sequence, this is the 5 prime end")
-					# the downstream flank(s) will be added immediately after the in_gff features are written
+					# Modified feature ends at 'position'
+					modified_line = modify_gff_line( 
+						line_elements, 
+						end = position, 
+						comment = gff_comments + 
+							";reform_comment=original feature split by inserted sequence, this is the 5 prime end"
+					)
+					gff_out.write(modified_line)
+					
+					# The downstream flank(s) will be added immediately after the 
+					# in_gff (new) features are written.
+					# First, attempt to rename IDs (to indicate they have been split)
 					renamed_id_attributes = rename_id(line)
-					split_features.append((line_elements, position + new_seq_length + 1, int(line_elements[4]) + new_seq_length, renamed_id_attributes + ";reform_comment=original feature split by inserted sequence, this is the 3 prime end"))
-				elif gff_feat_start < position and gff_feat_end >= position and gff_feat_end <= down_position:
-					# change end position of feature to cut off point (position)
+					split_features.append(
+						(
+							line_elements, 
+							position + new_seq_length + 1, 
+							int(line_elements[4]) + new_seq_length, 
+							renamed_id_attributes + 
+								";reform_comment=original feature split by inserted sequence, this is the 3 prime end"
+						)
+					)
+				
+				# Change end position of feature to cut off point (position) if the
+				# feature ends within the deletion (between position & down_position)
+				elif gff_feat_start <= position and gff_feat_end <= down_position:
 					print("Feature cut off - 3 prime side (downstream side) of feature cut off")
-					write_gff(gff_out, line_elements, end = position, comment = gff_comments + ";reform_comment=3 prime side of feature cut-off by inserted sequence")
+					modified_line = modify_gff_line(
+						line_elements, 
+						end = position, 
+						comment = gff_comments + 
+							";reform_comment=3 prime side of feature cut-off by inserted sequence"
+					)
+					gff_out.write(modified_line)
+				
+				# Skip this feature if it falls entirely within the deletion 
 				elif gff_feat_start > position and gff_feat_end <= down_position:
-					# skip this feature
 					print("Skip feature (this feature was removed from sequence)")
 					continue
+					
 				else:
 					if not in_gff_lines_appended:
-						for l in in_gff_lines:
-							write_gff(gff_out, l, start = int(l[3]) + position, end = int(l[4]) + position)
-						in_gff_lines_appended = True
-						for sf in split_features:
-							write_gff(gff_out, sf[0], start = sf[1], end = sf[2], comment = sf[3])
-					if gff_feat_start > position and gff_feat_start < down_position and gff_feat_end > down_position:
-						# change start position of feature to after cutoff point
+						in_gff_lines_appended = write_in_gff_lines(
+							gff_out, in_gff_lines, position, split_features)
+						
+					# Change start position of feature to after cutoff point if
+					# the feature starts within the deletion
+					if (gff_feat_start > position 
+						and gff_feat_start <= down_position 
+						and gff_feat_end > down_position):
 						print("Feature cut off - 5 prime side (upstream side) of feature cut off")
-						write_gff(gff_out, line_elements, start = position + new_seq_length, end = gff_feat_end + new_seq_length - (down_position - position), comment = gff_comments + ";reform_comment=5 prime side of feature cut-off by inserted sequence")
+						modified_line = modify_gff_line(
+							line_elements, 
+							start = position + new_seq_length + 1, 
+							end = gff_feat_end + new_seq_length - (down_position - position), 
+							comment = gff_comments + 
+								";reform_comment=5 prime side of feature cut-off by inserted sequence"
+						)
+						gff_out.write(modified_line)
+						
+					# Offset all downstream feature positions by offset length
 					elif gff_feat_start > down_position:
-						write_gff(gff_out, line_elements, start = gff_feat_start + new_seq_length - (down_position - position), end = gff_feat_end + new_seq_length - (down_position - position))
+						offset_length = new_seq_length - (down_position - position)
+						modified_line = modify_gff_line(
+							line_elements, 
+							start = gff_feat_start + offset_length, 
+							end = gff_feat_end + offset_length
+						)
+						gff_out.write(modified_line)
+						
 					else:
 						print("** Error: Unknown case for GFF modification. Exiting " + str(line_elements))
 						exit()
@@ -252,9 +322,8 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		if (last_seen_chrom_id is not None 
 			and last_seen_chrom_id == chrom_id
 			and not in_gff_lines_appended):
-			for l in in_gff_lines:
-				write_gff(gff_out, l, start = int(l[3]) + position, end = int(l[4]) + position)
-			in_gff_lines_appended = True
+			in_gff_lines_appended = write_in_gff_lines(
+				gff_out, in_gff_lines, position, split_features)
 		
 		# Checking to ensure in_gff_lines written
 		if not in_gff_lines_appended:
@@ -262,7 +331,9 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 			exit()
 		
 	gff_out.close()	
+	
 	return gff_out
+
 	
 def rename_id(line):
 	'''
@@ -274,8 +345,13 @@ def rename_id(line):
 	if elements[0].startswith("ID="):
 		print("Renaming split feature {} --> {}_split".format(elements[0], elements[0]))
 		return ("{}_split;{}".format(elements[0], ';'.join(elements[1:])))
+	elif elements[0].startswith("gene_id "):
+		gene_id = re.match(r'gene_id \"(.+)\"', elements[0])[1]
+		print('Renaming split feature {} --> {}_split'.format(gene_id, gene_id))
+		return ('gene _id "{}_split";{}'.format(gene_id, ';'.join(elements[1:])))
+
 	else:
-		print("This feature will not be renamed because it does not has an ID attribute:\n", line)
+		print("This feature will not be renamed because it does not has an ID/gene_id attribute:\n", line)
 		return attributes
 		
 def get_input_args():
