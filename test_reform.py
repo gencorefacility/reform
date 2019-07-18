@@ -49,7 +49,7 @@ class TestReform(unittest.TestCase):
 	def test_case_2(self):
 		"""
 		Case 2:
-		Indel resulting in truncating downstream side of feature.
+		Indel resulting in truncating 3' side of feature.
 		Indel starts at position 2 of feature and ends at last position 
 		of feature. All but first position of original feature remains. 
 		"""
@@ -178,7 +178,7 @@ class TestReform(unittest.TestCase):
 		Case 5:
 		1-base deletion, 10 base insertion. 
 		Deletion is position 1 of existing feature causing a 1 bp 
-		truncation upstream side of feature (first base), and the 
+		truncation upstream side (5' side) of feature (first base), and the 
 		remainder of the feature to be offset 9 bases downstream. 
 		"""
 		
@@ -303,6 +303,127 @@ class TestReform(unittest.TestCase):
 		
 		os.chdir(wd)
 
+	def test_case_8(self):
+		"""
+		Case 8:
+		Testing truncating features on reverse strand
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/8/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--upstream_fasta=up.fa \
+		--in_fasta=in.fa \
+		--in_gff=in.gff3 \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gff3 \
+		--downstream_fasta=down.fa
+		"""
 
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gff3', 'r') as f:
+			gold_gff = f.read()
+		with open('reformed.gff3', 'r') as f:
+			new_gff = f.read()
+		print("Testing GFF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+
+	def test_case_9(self):
+		"""
+		Case 9:
+		Insertion using the position argument at position 0
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/9/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gff3 \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gff3 \
+		--position=0
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gff3', 'r') as f:
+			gold_gff = f.read()
+		with open('reformed.gff3', 'r') as f:
+			new_gff = f.read()
+		print("Testing GFF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+		
+	def test_case_10(self):
+		"""
+		Case 10:
+		Insertion using the position argument at position -1 
+		(end of chromosome)
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/10/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gff3 \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gff3 \
+		--position=-1
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gff3', 'r') as f:
+			gold_gff = f.read()
+		with open('reformed.gff3', 'r') as f:
+			new_gff = f.read()
+		print("Testing GFF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+		
 if __name__ == '__main__':
     unittest.main()
