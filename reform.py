@@ -25,14 +25,19 @@ def main():
 	down_position = positions['down_position']
 	if position != down_position:
 		print("Removing nucleotides from position {} - {}".format(position, down_position))
-	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}".format(record.description, in_arg.in_fasta, position, in_arg.chrom))
+	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}"
+		.format(record.description, in_arg.in_fasta, position, in_arg.chrom))
 	
 	## Build the new chromosome sequence with the inserted_seq 
 	## If the chromosome sequence length is in the header, replace it with new length
 	new_seq = seq_str[:position] + str(record.seq) + seq_str[down_position:]
 	chrom_length = str(len(seq_str))
 	new_length = str(len(new_seq))
-	new_record = SeqRecord(Seq(new_seq, generic_dna), id=seq.id, description=seq.description.replace(chrom_length, new_length))
+	new_record = SeqRecord(
+		Seq(new_seq, generic_dna), 
+		id=seq.id, 
+		description=seq.description.replace(chrom_length, new_length)
+	)
 	
 	## Create new fasta file with modified chromosome 
 	new_fasta = 'reformed.fa'
@@ -164,7 +169,6 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
 	## Return True after writing the new GFF lines
 	return True
 
-# Position argument that you give is 0-based, but co-ordinates in in_gff are 1 based, like regular gff -- this way everything works!
 def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position, chrom_id, new_seq_length):
 	'''
 	Goes line by line through a gff file to remove existing features 
@@ -200,6 +204,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				gff_feat_start = int(line_elements[3])
 				gff_feat_end = int(line_elements[4])
 				gff_feat_type = line_elements[2]
+				gff_feat_strand = line_elements[6]
 				gff_comments = line_elements[8].strip()
 				
 				# If we've seen at least one chromosome
@@ -238,18 +243,21 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				# and ends after down_position
 				elif gff_feat_start <= position and gff_feat_end > down_position:
 					print("Feature split")
+					# Which side of the feature depends on the strand (we add this as a comment)
+					(x, y) = ("5", "3") if gff_feat_strand == "+" else ("3", "5")
+
 					# Modified feature ends at 'position'
 					modified_line = modify_gff_line( 
 						line_elements, 
 						end = position, 
 						comment = gff_comments + 
-							";reform_comment=original feature split by inserted sequence, this is the 5 prime end"
+							";reform_comment=original feature split by inserted sequence, this is the {} prime end".format(x)
 					)
 					gff_out.write(modified_line)
 					
 					# The downstream flank(s) will be added immediately after the 
 					# in_gff (new) features are written.
-					# First, attempt to rename IDs (to indicate they have been split)
+					# First, attempt to rename IDs (to indicate split)
 					renamed_id_attributes = rename_id(line)
 					split_features.append(
 						(
@@ -257,19 +265,23 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 							position + new_seq_length + 1, 
 							gff_feat_end + new_seq_length - (down_position - position), 
 							renamed_id_attributes + 
-								";reform_comment=original feature split by inserted sequence, this is the 3 prime end"
+								";reform_comment=original feature split by inserted sequence, this is the {} prime end".format(y)
 						)
 					)
 				
 				# Change end position of feature to cut off point (position) if the
 				# feature ends within the deletion (between position & down_position)
 				elif gff_feat_start <= position and gff_feat_end <= down_position:
-					print("Feature cut off - 3 prime side (downstream side) of feature cut off")
+					# Which side of the feature depends on the strand (we add this as a comment)
+					x = "3" if gff_feat_strand == "+" else "5"
+					print("Feature cut off - {} prime side of feature cut off ({} strand)"
+						.format(x, gff_feat_strand))
 					modified_line = modify_gff_line(
 						line_elements, 
 						end = position, 
 						comment = gff_comments + 
-							";reform_comment=3 prime side of feature cut-off by inserted sequence"
+							";reform_comment={} prime side of feature cut-off by inserted sequence"
+							.format(x)
 					)
 					gff_out.write(modified_line)
 				
@@ -288,13 +300,15 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					if (gff_feat_start > position 
 						and gff_feat_start <= down_position 
 						and gff_feat_end > down_position):
-						print("Feature cut off - 5 prime side (upstream side) of feature cut off")
+						x = "5" if gff_feat_strand == "+" else "3"
+						print("Feature cut off - {} prime side of feature cut off ({} strand)"
+							.format(x, gff_feat_strand))
 						modified_line = modify_gff_line(
 							line_elements, 
 							start = position + new_seq_length + 1, 
 							end = gff_feat_end + new_seq_length - (down_position - position), 
 							comment = gff_comments + 
-								";reform_comment=5 prime side of feature cut-off by inserted sequence"
+								";reform_comment={} prime side of feature cut-off by inserted sequence"									.format(x)
 						)
 						gff_out.write(modified_line)
 						
