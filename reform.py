@@ -255,7 +255,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						(
 							line_elements, 
 							position + new_seq_length + 1, 
-							int(line_elements[4]) + new_seq_length, 
+							gff_feat_end + new_seq_length - (down_position - position), 
 							renamed_id_attributes + 
 								";reform_comment=original feature split by inserted sequence, this is the 3 prime end"
 						)
