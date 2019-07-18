@@ -368,7 +368,7 @@ def get_input_args():
 	parser.add_argument('--downstream_fasta', type = str, default = None, 
 					help = "Path to Fasta file with downstream sequence. Either position, or upstream AND downstream sequence must be provided.")
 	parser.add_argument('--position', type = int, default = None,
-					help = "Position at which to insert new sequence. Either position, or upstream AND downstream sequence must be provided.") 
+					help = "Position at which to insert new sequence. Note: Position is 0-based. Either position, or upstream AND downstream sequence must be provided.") 
 	parser.add_argument('--ref_fasta', type = str, required = True,
 					help = "Path to reference fasta file")
 	parser.add_argument('--ref_gff', type = str, required = True,
