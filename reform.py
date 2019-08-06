@@ -189,6 +189,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	in_gff_lines_appended = False
 	split_features = []
 	last_seen_chrom_id = None
+	gff_ext = new_gff_name.split('.')[-1]
 	with open(ref_gff, "r") as f:
 		for line in f:
 			line_elements = line.split('\t')
@@ -245,13 +246,16 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					print("Feature split")
 					# Which side of the feature depends on the strand (we add this as a comment)
 					(x, y) = ("5", "3") if gff_feat_strand == "+" else ("3", "5")
-
+					
+					new_comment = format_comment(
+						"original feature split by inserted sequence, this is the {} prime end".format(x),
+						gff_ext
+					)
 					# Modified feature ends at 'position'
 					modified_line = modify_gff_line( 
 						line_elements, 
 						end = position, 
-						comment = gff_comments + 
-							";reform_comment=original feature split by inserted sequence, this is the {} prime end".format(x)
+						comment = gff_comments + new_comment
 					)
 					gff_out.write(modified_line)
 					
@@ -259,13 +263,16 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					# in_gff (new) features are written.
 					# First, attempt to rename IDs (to indicate split)
 					renamed_id_attributes = rename_id(line)
+					new_comment = format_comment(
+						"original feature split by inserted sequence, this is the {} prime end".format(y),
+						gff_ext
+					)
 					split_features.append(
 						(
 							line_elements, 
 							position + new_seq_length + 1, 
 							gff_feat_end + new_seq_length - (down_position - position), 
-							renamed_id_attributes + 
-								";reform_comment=original feature split by inserted sequence, this is the {} prime end".format(y)
+							renamed_id_attributes + new_comment 
 						)
 					)
 				
@@ -276,12 +283,14 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					x = "3" if gff_feat_strand == "+" else "5"
 					print("Feature cut off - {} prime side of feature cut off ({} strand)"
 						.format(x, gff_feat_strand))
+					new_comment = format_comment(
+						"{} prime side of feature cut-off by inserted sequence".format(x),
+						gff_ext
+					)
 					modified_line = modify_gff_line(
 						line_elements, 
 						end = position, 
-						comment = gff_comments + 
-							";reform_comment={} prime side of feature cut-off by inserted sequence"
-							.format(x)
+						comment = gff_comments + new_comment 
 					)
 					gff_out.write(modified_line)
 				
@@ -303,12 +312,15 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						x = "5" if gff_feat_strand == "+" else "3"
 						print("Feature cut off - {} prime side of feature cut off ({} strand)"
 							.format(x, gff_feat_strand))
+						new_comment = format_comment(
+							"{} prime side of feature cut-off by inserted sequence".format(x),
+							gff_ext
+						)
 						modified_line = modify_gff_line(
 							line_elements, 
 							start = position + new_seq_length + 1, 
 							end = gff_feat_end + new_seq_length - (down_position - position), 
-							comment = gff_comments + 
-								";reform_comment={} prime side of feature cut-off by inserted sequence"									.format(x)
+							comment = gff_comments + new_comment
 						)
 						gff_out.write(modified_line)
 						
@@ -347,12 +359,23 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	gff_out.close()	
 	
 	return gff_out
-
+def format_comment(comment, ext):
+	'''
+	Format comment according to ext (GFF or GTF) and return
+	'''
+	if ext.lower() == 'gtf':
+		new_comment = 'reform_comment "{}";'.format(comment)
+	elif ext.lower().startswith('gff'):
+		new_comment = "; reform_comment={}".format(comment)
+	else:
+		print("** Error: Unrecognized extension {} in format_comment(). Exiting".format(ext))
+		exit()
+	return new_comment
 	
 def rename_id(line):
 	'''
-	Given a gff line, this function will append the string "_split" 
-	to the end of the ID attribute
+	Given a gff or gtf  line, this function will append the string "_split" 
+	to the end of the ID/gene_id attribute
 	'''
 	attributes = line.split('\t')[8].strip()
 	elements = attributes.split(';')

@@ -19,20 +19,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -62,20 +62,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -105,20 +105,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -146,20 +146,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -190,20 +190,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -234,20 +234,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -276,20 +276,20 @@ class TestReform(unittest.TestCase):
 		python3 ../../reform.py \
 		--chrom="X" \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--position=3
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -317,20 +317,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up.fa \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -357,20 +357,20 @@ class TestReform(unittest.TestCase):
 		python3 ../../reform.py \
 		--chrom="X" \
 		--in_fasta=in.fa \
-		--in_gff=in.gff3 \
+		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--position=0
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -398,10 +398,50 @@ class TestReform(unittest.TestCase):
 		python3 ../../reform.py \
 		--chrom="X" \
 		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		--position=-1
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+		
+	def test_case_11(self):
+		"""
+		Case 11:
+		Testing GTF3 comment format (all above are GTF)
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/11/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
 		--in_gff=in.gff3 \
 		--ref_fasta=ref.fa \
 		--ref_gff=ref.gff3 \
-		--position=-1
+		--position=5
 		"""
 
 		response = subprocess.getoutput(command)
@@ -411,7 +451,7 @@ class TestReform(unittest.TestCase):
 			gold_gff = f.read()
 		with open('reformed.gff3', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF")
+		print("Testing GFF3")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
