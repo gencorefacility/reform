@@ -1,5 +1,6 @@
 import argparse
 import re
+import os
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -40,7 +41,9 @@ def main():
 	)
 	
 	## Create new fasta file with modified chromosome 
-	new_fasta = 'reformed.fa'
+	ref_basename = os.path.basename(in_arg.ref_fasta)
+	ref_name = os.path.splitext(ref_basename)[0]
+	new_fasta = ref_name + '_reformed.fa'
 	with open(new_fasta, "w") as f:
 		for s in chrom_seqs:
 			if s == seq.id:
@@ -55,8 +58,9 @@ def main():
 	in_gff_lines = get_in_gff_lines(in_arg.in_gff)
 	
 	## Create new gff file
-	annotation_ext = in_arg.ref_gff.split('.')[-1]
-	new_gff_name = 'reformed.' + annotation_ext
+	annotation_basename = os.path.basename(in_arg.ref_gff)
+	(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
+	new_gff_name = annotation_name + '_reformed' + annotation_ext
 	new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 	print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
 	

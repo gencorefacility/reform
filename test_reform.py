@@ -30,7 +30,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -38,7 +38,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -73,7 +73,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -81,7 +81,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -116,7 +116,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -124,7 +124,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -157,7 +157,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -165,7 +165,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -201,7 +201,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -209,7 +209,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -245,7 +245,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -253,7 +253,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -287,7 +287,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -295,7 +295,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -328,7 +328,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -336,7 +336,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -368,7 +368,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -376,7 +376,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -409,7 +409,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gtf', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
 		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -417,7 +417,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
@@ -449,7 +449,7 @@ class TestReform(unittest.TestCase):
 	
 		with open('gold.gff3', 'r') as f:
 			gold_gff = f.read()
-		with open('reformed.gff3', 'r') as f:
+		with open('ref_reformed.gff3', 'r') as f:
 			new_gff = f.read()
 		print("Testing GFF3")
 		self.assertListEqual(list(gold_gff), list(new_gff))
@@ -457,7 +457,7 @@ class TestReform(unittest.TestCase):
 		
 		with open('gold.fa', 'r') as f:
 			gold_fa = f.read()
-		with open('reformed.fa', 'r') as f:
+		with open('ref_reformed.fa', 'r') as f:
 			new_fa = f.read()
 		print("Testing Fasta")
 		self.assertListEqual(list(gold_fa), list(new_fa))
