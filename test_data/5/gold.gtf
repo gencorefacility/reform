@@ -1,0 +1,5 @@
+X	new	exon	5	14	.	+	0	gene_id "new"; transcript_id "new.1";
+X	ref	exon	15	34	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";reform_comment "5 prime side of feature cut-off by inserted sequence";
+X	ref	CDS	17	31	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";
+X	ref	start_codon	15	16	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";reform_comment "5 prime side of feature cut-off by inserted sequence";
+X	ref	stop_codon	32	34	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";
