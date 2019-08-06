@@ -1,5 +1,0 @@
-X	new	exon	4	13	.	+	0	gene_id "new"; transcript_id "new.1";
-X	ref	exon	15	35	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";
-X	ref	CDS	18	32	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";
-X	ref	start_codon	15	17	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";
-X	ref	stop_codon	33	35	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";

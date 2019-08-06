@@ -1,5 +1,0 @@
-X	ref	exon	5	5	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";reform_comment "original feature split by inserted sequence, this is the 5 prime end";
-X	ref	start_codon	5	5	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";reform_comment "3 prime side of feature cut-off by inserted sequence";
-X	new	exon	6	15	.	+	0	gene_id "new"; transcript_id "new.1";
-X	ref	exon	16	17	.	+	0	gene _id "ref_gene_split"; transcript_id "ref_gene.1";reform_comment "original feature split by inserted sequence, this is the 3 prime end";
-X	ref	stop_codon	16	17	.	+	0	gene_id "ref_gene"; transcript_id "ref_gene.1";reform_comment "5 prime side of feature cut-off by inserted sequence";
