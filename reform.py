@@ -12,7 +12,10 @@ def main():
     in_arg = get_input_args()
 
     ## Retrieve ouptut directory
-    output_dir = in_arg.output_dir
+    if in_arg.output_dir:
+        output_dir = in_arg.output_dir
+    else:
+        output_dir = "./"
 
     ## Read the new fasta (to be inserted into the ref genome)
     record = list(SeqIO.parse(in_arg.in_fasta, "fasta"))[0]
