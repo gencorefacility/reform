@@ -9,7 +9,10 @@ from Bio.Alphabet import generic_dna
 def main():
 	## Retrieve command line arguments
 	in_arg = get_input_args()
-
+	
+	## Retrieve ouptut directory
+	output_dir = in_arg.output_dir
+	
 	## Read the new fasta (to be inserted into the ref genome)
 	record = list(SeqIO.parse(in_arg.in_fasta, "fasta"))[0]
 	
@@ -43,7 +46,7 @@ def main():
 	## Create new fasta file with modified chromosome 
 	ref_basename = os.path.basename(in_arg.ref_fasta)
 	ref_name = os.path.splitext(ref_basename)[0]
-	new_fasta = ref_name + '_reformed.fa'
+    	new_fasta = output_dir + ref_name + '_reformed.fa'
 	with open(new_fasta, "w") as f:
 		for s in chrom_seqs:
 			if s == seq.id:
@@ -60,7 +63,7 @@ def main():
 	## Create new gff file
 	annotation_basename = os.path.basename(in_arg.ref_gff)
 	(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
-	new_gff_name = annotation_name + '_reformed' + annotation_ext
+    	new_gff_name = output_dir + annotation_name + '_reformed' + annotation_ext
 	new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 	print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
 	
@@ -414,6 +417,9 @@ def get_input_args():
 					help = "Path to reference fasta file")
 	parser.add_argument('--ref_gff', type = str, required = True,
 					help = "Path to reference gff file") 
+	parser.add_argument('--output_dir', type=str, default=None,
+                        		help="Path to output to")
+
 					
 	in_args = parser.parse_args()
 	if in_args.position is None and (in_args.upstream_fasta is None or in_args.downstream_fasta is None):
