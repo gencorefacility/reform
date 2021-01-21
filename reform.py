@@ -1,10 +1,10 @@
+#!/bin/env python
 import argparse
 import re
 import os
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.Alphabet import generic_dna
 
 def main():
 	## Retrieve command line arguments
@@ -35,7 +35,7 @@ def main():
 	chrom_length = str(len(seq_str))
 	new_length = str(len(new_seq))
 	new_record = SeqRecord(
-		Seq(new_seq, generic_dna), 
+		Seq(new_seq), 
 		id=seq.id, 
 		description=seq.description.replace(chrom_length, new_length)
 	)
