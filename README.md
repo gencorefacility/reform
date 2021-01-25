@@ -8,7 +8,7 @@ Learn more at https://gencore.bio.nyu.edu/reform/
 
 ## Usage
 
-*ref*orm requires Python3 and Biopython. 
+*ref*orm requires Python3 and Biopython v1.78 or higher. 
 
 Install biopython if you don't already have it:
 
