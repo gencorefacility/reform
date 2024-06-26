@@ -74,12 +74,12 @@ def index_fasta(fasta_path):
 	'''
 	if fasta_path.endswith('.gz'):
 		with gzip.open(fasta_path, 'rt') as f:
-            # Create a tempfile to store uncompressde content
+            		# Create a tempfile to store uncompressde content
 			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 				tmp_f.write(f.read())
 				tmp_f_path = tmp_f.name
 		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
-        # remove temp file
+        	# remove temp file
 		os.remove(tmp_f_path)
 	else:
 		chrom_seqs = SeqIO.index(fasta_path, 'fasta')
