@@ -1,5 +1,0 @@
-python3 ../../reform.py --chrom="X" --in_fasta=in1.fa --in_gff=in1.gtf --ref_fasta=ref.fa --ref_gff=ref.gtf --position=0
-python3 ../../reform.py --chrom="X" --in_fasta=in2.fa --in_gff=in2.gtf --ref_fasta=ref_reformed.fa --ref_gff=ref_reformed.gtf --position=-1
-python3 ../../reform.py --chrom="X" --in_fasta=in3.fa --in_gff=in3.gtf --ref_fasta=ref_reformed_reformed.fa --ref_gff=ref_reformed_reformed.gtf --position=15
-
-find . -type f \( -name "ref_reformed.fa" -o -name "ref_reformed.gtf" \) -exec rm -f {} +

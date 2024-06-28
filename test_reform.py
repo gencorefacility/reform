@@ -494,11 +494,11 @@ class TestReform(unittest.TestCase):
 		command = """
 		python3 ../../reform.py \
 		--chrom="X" \
-		--in_fasta=in1.fa, in2.fa, in3.fa \
-		--in_gff=in1.gff3, in2.gff3, in3.gff3 \
+		--in_fasta=in1.fa,in2.fa,in3.fa \
+		--in_gff=in1.gff3,in2.gff3,in3.gff3 \
 		--ref_fasta=ref.fa \
 		--ref_gff=ref.gff3 \
-		--position=0, -1, 5
+		--position=0,-1,5
 		"""
 
 		response = subprocess.getoutput(command)

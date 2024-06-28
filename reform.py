@@ -7,70 +7,71 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 def main():
-	## Retrieve command line arguments
-	in_arg = get_input_args()
+	## Retrieve command line arguments and number of iterations
+	in_arg, iterations = get_input_args()
 
-	## Temp code for step 2 and test, will be remove later
-	in_arg.in_fasta = in_arg.in_fasta[0]
-	in_arg.in_gff = in_arg.in_gff[0]
-	in_arg.upstream_fasta = in_arg.upstream_fasta[0] if in_arg.upstream_fasta else in_arg.upstream_fasta
-	in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
-	in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
-
-	## Read the new fasta (to be inserted into the ref genome)
-	record = list(SeqIO.parse(in_arg.in_fasta, "fasta"))[0]
+	# ## Temp code for step 2 and test, will be remove later
+	# in_arg.in_fasta = in_arg.in_fasta[0]
+	# in_arg.in_gff = in_arg.in_gff[0]
+	# in_arg.upstream_fasta = in_arg.upstream_fasta[0] if in_arg.upstream_fasta else in_arg.upstream_fasta
+	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
+	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
 	
-	## Generate index of sequences from ref reference fasta
-	chrom_seqs = SeqIO.index(in_arg.ref_fasta,'fasta')
-	
-	## Obtain the sequence of the chromosome we want to modify
-	seq = chrom_seqs[in_arg.chrom]
-	seq_str = str(seq.seq)
-	
-	## Get the position to insert the new sequence
-	positions = get_position(in_arg.position, in_arg.upstream_fasta, in_arg.downstream_fasta, in_arg.chrom, seq_str)
-	position = positions['position']
-	down_position = positions['down_position']
-	if position != down_position:
-		print("Removing nucleotides from position {} - {}".format(position, down_position))
-	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}"
-		.format(record.description, in_arg.in_fasta, position, in_arg.chrom))
-	
-	## Build the new chromosome sequence with the inserted_seq 
-	## If the chromosome sequence length is in the header, replace it with new length
-	new_seq = seq_str[:position] + str(record.seq) + seq_str[down_position:]
-	chrom_length = str(len(seq_str))
-	new_length = str(len(new_seq))
-	new_record = SeqRecord(
-		Seq(new_seq), 
-		id=seq.id, 
-		description=seq.description.replace(chrom_length, new_length)
-	)
-	
-	## Create new fasta file with modified chromosome 
-	ref_basename = os.path.basename(in_arg.ref_fasta)
-	ref_name = os.path.splitext(ref_basename)[0]
-	new_fasta = ref_name + '_reformed.fa'
-	with open(new_fasta, "w") as f:
-		for s in chrom_seqs:
-			if s == seq.id:
-				SeqIO.write([new_record], f, "fasta")
-			else:
-				SeqIO.write([chrom_seqs[s]], f, "fasta")
-				
-	print("New fasta file created: ", new_fasta)
-	print("Preparing to create new annotation file")
-	
-	## Read in new GFF features from in_gff
-	in_gff_lines = get_in_gff_lines(in_arg.in_gff)
-	
-	## Create new gff file
-	annotation_basename = os.path.basename(in_arg.ref_gff)
-	(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
-	new_gff_name = annotation_name + '_reformed' + annotation_ext
-	new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
-	print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
-	
+	for index in range(iterations):
+		## Read the new fasta (to be inserted into the ref genome)
+		record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
+		
+		## Generate index of sequences from ref reference fasta
+		chrom_seqs = SeqIO.index(in_arg.ref_fasta,'fasta')
+		
+		## Obtain the sequence of the chromosome we want to modify
+		seq = chrom_seqs[in_arg.chrom]
+		seq_str = str(seq.seq)
+		
+		## Get the position to insert the new sequence
+		positions = get_position(index, in_arg.position, in_arg.upstream_fasta, in_arg.downstream_fasta, in_arg.chrom, seq_str)
+		position = positions['position']
+		down_position = positions['down_position']
+		if position != down_position:
+			print("Removing nucleotides from position {} - {}".format(position, down_position))
+		print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}"
+			.format(record.description, in_arg.in_fasta[index], position, in_arg.chrom))
+		
+		## Build the new chromosome sequence with the inserted_seq 
+		## If the chromosome sequence length is in the header, replace it with new length
+		new_seq = seq_str[:position] + str(record.seq) + seq_str[down_position:]
+		chrom_length = str(len(seq_str))
+		new_length = str(len(new_seq))
+		new_record = SeqRecord(
+			Seq(new_seq), 
+			id=seq.id, 
+			description=seq.description.replace(chrom_length, new_length)
+		)
+		
+		## Create new fasta file with modified chromosome 
+		ref_basename = os.path.basename(in_arg.ref_fasta)
+		ref_name = os.path.splitext(ref_basename)[0]
+		new_fasta = ref_name + '_reformed.fa'
+		with open(new_fasta, "w") as f:
+			for s in chrom_seqs:
+				if s == seq.id:
+					SeqIO.write([new_record], f, "fasta")
+				else:
+					SeqIO.write([chrom_seqs[s]], f, "fasta")
+					
+		print("New fasta file created: ", new_fasta)
+		print("Preparing to create new annotation file")
+		
+		## Read in new GFF features from in_gff
+		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
+		
+		## Create new gff file
+		annotation_basename = os.path.basename(in_arg.ref_gff)
+		(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
+		new_gff_name = annotation_name + '_reformed' + annotation_ext
+		new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+		print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
+		
 def modify_gff_line(elements, start=None, end=None, comment=None):
 	'''
 	Modifies an existing GFF line and returns the modified line. Currently, you can 
@@ -115,15 +116,16 @@ def get_in_gff_lines(in_gff):
 			in_gff_lines.append(line_elements)
 	return in_gff_lines
 	
-def get_position(position, upstream, downstream, chrom, seq_str):
+def get_position(index, positions, upstream, downstream, chrom, seq_str):
 	''' 
 	Determine the position in seq_str to insert the new sequence given 
 	the position, upstream, downstream, and chrom arguments.
 	Note that either position, or upstream AND downstream sequences must
 	be provided.
 	'''
-	if position is not None and position >= -1:
+	if positions and index < len(positions) and positions[index] >= -1:
 		print("Checking position validity")
+		position = positions[index]
 		if position > len(seq_str):
 			print("** ERROR: Position greater than length of chromosome.")
 			print("Chromosome: {}\Chromosome length: {}\nPosition: \n{}".format(chrom, len(seq_str), position))
@@ -136,19 +138,19 @@ def get_position(position, upstream, downstream, chrom, seq_str):
 		print("Position valid")
 	else:
 		print("No valid position specified, checking for upstream and downstream sequence")
-		if upstream is not None and downstream is not None:
+		if index < len(upstream) and index < len(downstream):
 			seq_str = seq_str.upper()
-			upstream_fasta = list(SeqIO.parse(upstream, "fasta"))
+			upstream_fasta = list(SeqIO.parse(upstream[index], "fasta"))
 			upstream_seq = str(upstream_fasta[0].seq).upper()
-			downstream_fasta = list(SeqIO.parse(downstream, "fasta"))
+			downstream_fasta = list(SeqIO.parse(downstream[index], "fasta"))
 			downstream_seq = str(downstream_fasta[0].seq).upper()
 			# Ensure the upstream and downstream target sequences exists once in the selected chromosome, else die
 			upstream_seq_count = seq_str.count(upstream_seq)
 			downstream_seq_count = seq_str.count(downstream_seq)
 			if upstream_seq_count == 1 and downstream_seq_count == 1:
 				## Obtain the starting position of the left_strand
-				index = seq_str.find(upstream_seq)
-				position = index + len(upstream_seq)
+				new_index = seq_str.find(upstream_seq)
+				position = new_index + len(upstream_seq)
 				down_position = seq_str.find(downstream_seq)
 			else:
 				print("** ERROR: The upstream and downstream target sequences must be present and unique in the specified chromosome.")
@@ -415,30 +417,49 @@ def get_input_args():
                     help="Path(s) to Fasta file(s) with upstream sequence. Either position, or upstream AND downstream sequence must be provided.")
 	parser.add_argument('--downstream_fasta', nargs='+', type=str, default=None, 
                     help="Path(s) to Fasta file(s) with downstream sequence. Either position, or upstream AND downstream sequence must be provided.")
-	parser.add_argument('--position', nargs='+', type = int, default = None,
-					help = "Positions at which to insert new sequence. Note: Position is 0-based. Either position, or upstream AND downstream sequence must be provided.") 
+	parser.add_argument('--position', type=str, default=None,
+                    help="Comma-separated positions at which to insert new sequence. Note: Position is 0-based, no space between each comma. Either position, or upstream AND downstream sequence must be provided.")
 	parser.add_argument('--ref_fasta', type = str, required = True,
 					help = "Path to reference fasta file")
 	parser.add_argument('--ref_gff', type = str, required = True,
 					help = "Path to reference gff file") 
 					
 	in_args = parser.parse_args()
+	
 	if in_args.position is None and (in_args.upstream_fasta is None or in_args.downstream_fasta is None):
 		print("** Error: You must provide either the position, or the upstream and downstream sequences.")
 		exit()
+	
+	if not in_args.position and len(in_args.upstream_fasta) != len(in_args.downstream_fasta):
+		print("** Error: The number of upstream_fasta and downstream_fasta files does not match.")
+		exit()
+
+	if in_args.position is not None:
+		try:
+			in_args.position = list(map(int, in_args.position.split(',')))
+			iterations = iterations = len(in_args.position)
+		except ValueError:
+			print("** Error: Position must be a comma-separated list of integers, like 1,5,-1.")
+			exit()
+	else:
+		iterations = len(in_args.upstream_fasta)
+
+	if (len(in_args.in_fasta) != len(in_args.in_gff)) or (len(in_args.in_fasta) != iterations):
+		print("** Error: The number of inserted FASTA files does not match the number of GTF files, or their counts and positions do not align.")
+		exit()
 		
-	return in_args
+	return in_args, iterations
 	
 if __name__ == "__main__":
 	main()
 	
-	## Temp code for step 1 and test, will be remove later
+	# # Temp code for step 1 and test, will be remove later
 	# args = get_input_args()
 	# print("Chromosome:", args.chrom)
 	# print("Input FASTA files:", args.in_fasta)
 	# print("Input GFF files:", args.in_gff)
 	# print("Upstream FASTA files:", args.upstream_fasta)
 	# print("Downstream FASTA files:", args.downstream_fasta)
-	# print("Position:", args.position)
+	# print("Position:", list(map(int, args.position.split(','))))
 	# print("Reference FASTA file:", args.ref_fasta)
 	# print("Reference GFF file:", args.ref_gff)
