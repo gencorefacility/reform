@@ -480,7 +480,49 @@ class TestReform(unittest.TestCase):
 		
 		os.chdir(wd)
 	
-	# def test_case_14(self):
+	## test case for Sequential Processing
+	'''
+	def test_case_14(self):
+		"""
+		Case 14:
+		Testing Sequential Processing which use multiple up.fa and down.fa files
+		"""
+
+		wd = os.getcwd()
+		os.chdir('test_data/14/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--upstream_fasta=up1.fa,up2.fa,up3.fa \
+		--in_fasta=in1.fa,in2.fa,in3.fa \
+		--in_gff=in1.gff3,in2.gff3,in3.gff3 \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gff3 \
+		--downstream_fasta=down1.fa,down2.fa,down3.fa
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gff3', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gff3', 'r') as f:
+			new_gff = f.read()
+		print("Testing GFF3")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+
 
 	def test_case_15(self):
 		"""
@@ -521,6 +563,6 @@ class TestReform(unittest.TestCase):
 		print("Done")
 		
 		os.chdir(wd)
-		
+	'''	
 if __name__ == '__main__':
     unittest.main()
