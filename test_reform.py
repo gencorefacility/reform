@@ -4,6 +4,21 @@ import subprocess
 import os
 
 class TestReform(unittest.TestCase):
+	def setUp(self):
+		self.wd = os.getcwd()
+		self.cleanup()  # Clean up before each test case
+
+	def tearDown(self):
+		os.chdir(self.wd)
+		self.cleanup()  # Clean up after each test case
+
+	def cleanup(self):
+		print("Clean Up")
+		# Cleanup command to remove ref_reformed.fa and ref_reformed.gtf files
+		cleanup_command = 'find test_data/ -type f \( -name "ref_reformed.fa" -o -name "ref_reformed.gtf" \) -exec rm -f {} +'
+		os.system(cleanup_command)
+		print("Done")
+	
 	def test_case_1(self):
 		"""
 		Case 1:
@@ -442,6 +457,48 @@ class TestReform(unittest.TestCase):
 		--ref_fasta=ref.fa \
 		--ref_gff=ref.gff3 \
 		--position=5
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gff3', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gff3', 'r') as f:
+			new_gff = f.read()
+		print("Testing GFF3")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+	
+	# def test_case_14(self):
+
+	def test_case_15(self):
+		"""
+		Case 15:
+		Testing Sequential Processing which combine test case 9, 10, 11
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/15/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in1.fa, in2.fa, in3.fa \
+		--in_gff=in1.gff3, in2.gff3, in3.gff3 \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gff3 \
+		--position=0, -1, 5
 		"""
 
 		response = subprocess.getoutput(command)

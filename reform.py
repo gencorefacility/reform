@@ -10,6 +10,13 @@ def main():
 	## Retrieve command line arguments
 	in_arg = get_input_args()
 
+	## Temp code for step 2 and test, will be remove later
+	in_arg.in_fasta = in_arg.in_fasta[0]
+	in_arg.in_gff = in_arg.in_gff[0]
+	in_arg.upstream_fasta = in_arg.upstream_fasta[0] if in_arg.upstream_fasta else in_arg.upstream_fasta
+	in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
+	in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
+
 	## Read the new fasta (to be inserted into the ref genome)
 	record = list(SeqIO.parse(in_arg.in_fasta, "fasta"))[0]
 	
@@ -400,16 +407,16 @@ def get_input_args():
 	
 	parser.add_argument('--chrom', type = str, required = True,
 					help = "Chromosome name (String)") 
-	parser.add_argument('--in_fasta', type = str, required = True,
-					help = "Path to new sequence to be inserted into reference genome in fasta format") 
-	parser.add_argument('--in_gff', type = str, required = True,
-					help = "Path to GFF file describing new fasta sequence to be inserted") 
-	parser.add_argument('--upstream_fasta', type = str, default = None, 
-					help = "Path to Fasta file with upstream sequence. Either position, or upstream AND downstream sequence must be provided.")
-	parser.add_argument('--downstream_fasta', type = str, default = None, 
-					help = "Path to Fasta file with downstream sequence. Either position, or upstream AND downstream sequence must be provided.")
-	parser.add_argument('--position', type = int, default = None,
-					help = "Position at which to insert new sequence. Note: Position is 0-based. Either position, or upstream AND downstream sequence must be provided.") 
+	parser.add_argument('--in_fasta', nargs='+', type=str, required=True,
+                    help="Path(s) to new sequence(s) to be inserted into reference genome in fasta format") 
+	parser.add_argument('--in_gff', nargs='+', type=str, required=True,
+                    help="Path(s) to GFF file(s) describing new fasta sequence(s) to be inserted") 
+	parser.add_argument('--upstream_fasta', nargs='+', type=str, default=None, 
+                    help="Path(s) to Fasta file(s) with upstream sequence. Either position, or upstream AND downstream sequence must be provided.")
+	parser.add_argument('--downstream_fasta', nargs='+', type=str, default=None, 
+                    help="Path(s) to Fasta file(s) with downstream sequence. Either position, or upstream AND downstream sequence must be provided.")
+	parser.add_argument('--position', nargs='+', type = int, default = None,
+					help = "Positions at which to insert new sequence. Note: Position is 0-based. Either position, or upstream AND downstream sequence must be provided.") 
 	parser.add_argument('--ref_fasta', type = str, required = True,
 					help = "Path to reference fasta file")
 	parser.add_argument('--ref_gff', type = str, required = True,
@@ -424,3 +431,14 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
+	
+	## Temp code for step 1 and test, will be remove later
+	# args = get_input_args()
+	# print("Chromosome:", args.chrom)
+	# print("Input FASTA files:", args.in_fasta)
+	# print("Input GFF files:", args.in_gff)
+	# print("Upstream FASTA files:", args.upstream_fasta)
+	# print("Downstream FASTA files:", args.downstream_fasta)
+	# print("Position:", args.position)
+	# print("Reference FASTA file:", args.ref_fasta)
+	# print("Reference GFF file:", args.ref_gff)
