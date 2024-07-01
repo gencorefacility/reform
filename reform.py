@@ -2,6 +2,8 @@
 import argparse
 import re
 import os
+import gzip
+import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -14,7 +16,7 @@ def main():
 	record = list(SeqIO.parse(in_arg.in_fasta, "fasta"))[0]
 	
 	## Generate index of sequences from ref reference fasta
-	chrom_seqs = SeqIO.index(in_arg.ref_fasta,'fasta')
+	chrom_seqs = index_fasta(in_arg.ref_fasta)
 	
 	## Obtain the sequence of the chromosome we want to modify
 	seq = chrom_seqs[in_arg.chrom]
@@ -41,8 +43,8 @@ def main():
 	)
 	
 	## Create new fasta file with modified chromosome 
-	ref_basename = os.path.basename(in_arg.ref_fasta)
-	ref_name = os.path.splitext(ref_basename)[0]
+	ref_basename, _ = get_ref_basename(in_arg.ref_fasta)
+	ref_name = ref_basename
 	new_fasta = ref_name + '_reformed.fa'
 	with open(new_fasta, "w") as f:
 		for s in chrom_seqs:
@@ -58,12 +60,41 @@ def main():
 	in_gff_lines = get_in_gff_lines(in_arg.in_gff)
 	
 	## Create new gff file
-	annotation_basename = os.path.basename(in_arg.ref_gff)
-	(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
+	annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
 	new_gff_name = annotation_name + '_reformed' + annotation_ext
 	new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 	print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
 	
+def index_fasta(fasta_path):
+	'''
+	Process incoming FASTA files, supporting both decompressed and uncompressed 
+	formats. It takes a file path (fasta_path), decompresses the file into a 
+	temporary file if it is a compressed file ending in .gz, and then indexes 
+	the temporary file. Finally, the indexing result is returned.
+	'''
+	if fasta_path.endswith('.gz'):
+		with gzip.open(fasta_path, 'rt') as f:
+            		# Create a tempfile to store uncompressde content
+			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+				tmp_f.write(f.read())
+				tmp_f_path = tmp_f.name
+		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
+        	# remove temp file
+		os.remove(tmp_f_path)
+	else:
+		chrom_seqs = SeqIO.index(fasta_path, 'fasta')
+	return chrom_seqs
+
+def get_ref_basename(filepath):
+	'''
+	Takes a filepath and returns the filename and extension minus the .gz.
+	'''
+	base = os.path.basename(filepath)
+	if base.endswith('.gz'):
+		base = base[:-3]  # remove .gz
+	name, ext = os.path.splitext(base)
+	return name, ext
+
 def modify_gff_line(elements, start=None, end=None, comment=None):
 	'''
 	Modifies an existing GFF line and returns the modified line. Currently, you can 
@@ -194,7 +225,12 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	split_features = []
 	last_seen_chrom_id = None
 	gff_ext = new_gff_name.split('.')[-1]
-	with open(ref_gff, "r") as f:
+
+	if ref_gff.endswith('.gz'):
+		open_func = gzip.open
+	else:
+		open_func = open
+	with open_func(ref_gff, "rt") as f:
 		for line in f:
 			line_elements = line.split('\t')
 			if line.startswith("#"):
