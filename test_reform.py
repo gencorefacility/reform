@@ -15,7 +15,7 @@ class TestReform(unittest.TestCase):
 	def cleanup(self):
 		print("Clean Up")
 		# Cleanup command to remove ref_reformed.fa and ref_reformed.gtf files
-		cleanup_command = 'find test_data/ -type f \( -name "ref_reformed.fa" -o -name "ref_reformed.gtf" \) -exec rm -f {} +'
+		cleanup_command = 'find test_data/ -type f \( -name "ref_reformed.fa" -o -name "ref_reformed.gtf" -o -name "ref_reformed.gff3" \) -exec rm -f {} +'
 		os.system(cleanup_command)
 		print("Done")
 	
@@ -480,8 +480,7 @@ class TestReform(unittest.TestCase):
 		
 		os.chdir(wd)
 	
-	## test case for Sequential Processing
-	'''
+	
 	def test_case_14(self):
 		"""
 		Case 14:
@@ -496,20 +495,20 @@ class TestReform(unittest.TestCase):
 		--chrom="X" \
 		--upstream_fasta=up1.fa,up2.fa,up3.fa \
 		--in_fasta=in1.fa,in2.fa,in3.fa \
-		--in_gff=in1.gff3,in2.gff3,in3.gff3 \
+		--in_gff=in1.gtf,in2.gtf,in3.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--downstream_fasta=down1.fa,down2.fa,down3.fa
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('ref_reformed.gff3', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF3")
+		print("Testing GTF")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -537,20 +536,20 @@ class TestReform(unittest.TestCase):
 		python3 ../../reform.py \
 		--chrom="X" \
 		--in_fasta=in1.fa,in2.fa,in3.fa \
-		--in_gff=in1.gff3,in2.gff3,in3.gff3 \
+		--in_gff=in1.gtf,in2.gtf,in3.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gff3 \
+		--ref_gff=ref.gtf \
 		--position=0,-1,5
 		"""
 
 		response = subprocess.getoutput(command)
 		print(response)
 	
-		with open('gold.gff3', 'r') as f:
+		with open('gold.gtf', 'r') as f:
 			gold_gff = f.read()
-		with open('ref_reformed.gff3', 'r') as f:
+		with open('ref_reformed.gtf', 'r') as f:
 			new_gff = f.read()
-		print("Testing GFF3")
+		print("Testing gtf")
 		self.assertListEqual(list(gold_gff), list(new_gff))
 		print("Done")
 		
@@ -563,6 +562,6 @@ class TestReform(unittest.TestCase):
 		print("Done")
 		
 		os.chdir(wd)
-	'''	
+
 if __name__ == '__main__':
     unittest.main()

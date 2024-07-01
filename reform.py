@@ -2,6 +2,7 @@
 import argparse
 import re
 import os
+import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -17,12 +18,22 @@ def main():
 	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
 	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
 	
+	# TODO: list for prev pos and record
+	## Store the postion of previous modification and lenght
+
+	prev_fasta_path = None
+	prev_gff_path = None
+
 	for index in range(iterations):
 		## Read the new fasta (to be inserted into the ref genome)
 		record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
 		
 		## Generate index of sequences from ref reference fasta
-		chrom_seqs = SeqIO.index(in_arg.ref_fasta,'fasta')
+		if prev_fasta_path:
+			chrom_seqs = SeqIO.index(prev_fasta_path,'fasta')
+			os.remove(prev_fasta_path)
+		else:	
+			chrom_seqs = SeqIO.index(in_arg.ref_fasta,'fasta')
 		
 		## Obtain the sequence of the chromosome we want to modify
 		seq = chrom_seqs[in_arg.chrom]
@@ -49,28 +60,48 @@ def main():
 		)
 		
 		## Create new fasta file with modified chromosome 
-		ref_basename = os.path.basename(in_arg.ref_fasta)
-		ref_name = os.path.splitext(ref_basename)[0]
-		new_fasta = ref_name + '_reformed.fa'
+		if index < iterations - 1:
+			new_fasta_file = tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.fa')
+			new_fasta_file.close()
+			new_fasta = new_fasta_file.name
+			prev_fasta_path = new_fasta
+		else:
+			ref_basename = os.path.basename(in_arg.ref_fasta)
+			ref_name = os.path.splitext(ref_basename)[0]
+			new_fasta = ref_name + '_reformed.fa'
 		with open(new_fasta, "w") as f:
 			for s in chrom_seqs:
 				if s == seq.id:
 					SeqIO.write([new_record], f, "fasta")
 				else:
 					SeqIO.write([chrom_seqs[s]], f, "fasta")
-					
 		print("New fasta file created: ", new_fasta)
+		
 		print("Preparing to create new annotation file")
 		
 		## Read in new GFF features from in_gff
 		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
 		
-		## Create new gff file
+		## Create a temp file for gff, if index is not equal to last iteration
 		annotation_basename = os.path.basename(in_arg.ref_gff)
 		(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
-		new_gff_name = annotation_name + '_reformed' + annotation_ext
-		new_gff = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
-		print("New {} file created: {} ".format(annotation_ext.upper(), new_gff.name))
+		if index < iterations - 1:
+			temp_gff = tempfile.NamedTemporaryFile(delete=False, mode='w', suffix=annotation_ext)
+			temp_gff_name = temp_gff.name
+			temp_gff.close()
+			if prev_gff_path:
+				new_gff_path = create_new_gff(temp_gff_name, prev_gff_path, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+				os.remove(prev_gff_path)
+			else:
+				new_gff_path = create_new_gff(temp_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+		else:
+			new_gff_name = annotation_name + '_reformed' + annotation_ext
+			if prev_gff_path: 
+				new_gff_path = create_new_gff(new_gff_name, prev_gff_path, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+			else:
+				new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+		prev_gff_path = new_gff_path
+		print("New {} file created: {} ".format(annotation_ext.upper(), prev_gff_path))
 		
 def modify_gff_line(elements, start=None, end=None, comment=None):
 	'''
@@ -188,7 +219,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	(or parts of existing features) and/or insert new features. 
 	In the process of adding new features, existing features 
 	may be cut-off on either end or split into two. 
-	This attempts to handle all cases. 
+	This attempts to handle all cases.
 	new_gff_name: the name of the new gff file to create
 	ref_gff: the reference gff file to modify
 	in_gff_lines: a list of lists where each nested list is a list of 
@@ -198,131 +229,102 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	chrom_id: the ID of the chromosome to modify
 	new_seq_length: the length of the new sequence being added to the chromosome
 	'''
-	gff_out = open(new_gff_name, "w")
-	in_gff_lines_appended = False
-	split_features = []
-	last_seen_chrom_id = None
-	gff_ext = new_gff_name.split('.')[-1]
-	with open(ref_gff, "r") as f:
-		for line in f:
-			line_elements = line.split('\t')
-			if line.startswith("#"):
-				if line_elements[0] == "##sequence-region" and line_elements[1] == chrom_id:
-					## Edit the length of the chromosome 
-					original_length = int(line_elements[3])
-					new_length = original_length - (down_position - position) + new_seq_length
-					line = line.replace(str(original_length), str(new_length))
-				gff_out.write(line)
-			else:
-				gff_chrom_id = line_elements[0]
-				gff_feat_start = int(line_elements[3])
-				gff_feat_end = int(line_elements[4])
-				gff_feat_type = line_elements[2]
-				gff_feat_strand = line_elements[6]
-				gff_comments = line_elements[8].strip()
-				
-				# If we've seen at least one chromosome
-				# and the last chromosome seen was the chromosome of interest (i.e. chrom_id)
-				# and now we're on a new chromosome in the original gff file
-				# and the in_gff_lines have not yet been appended:
-				# we assume they need to be appended to the end of the chromosome
-				# so append them before proceeding
-				if (last_seen_chrom_id is not None
-					and last_seen_chrom_id == chrom_id
-					and gff_chrom_id != last_seen_chrom_id 
-					and not in_gff_lines_appended):
-					in_gff_lines_appended = write_in_gff_lines(
-						gff_out, in_gff_lines, position, split_features)
-				
-				last_seen_chrom_id = gff_chrom_id
-				
-				# If this is not the chromosome of interest
-				# Or if the current feature ends before any 
-				# modification (which occurs at position)
-				# Then simply write the feature as is (no modification)
-				# (remember gff co-ordinates are 1 based and position 
-				# is 0 based, therefor check less than *or equal to*)
-				if gff_chrom_id != chrom_id or gff_feat_end <= position:
+	with open(new_gff_name, "w") as gff_out:
+		in_gff_lines_appended = False
+		split_features = []
+		last_seen_chrom_id = None
+		gff_ext = new_gff_name.split('.')[-1]
+		with open(ref_gff, "r") as f:
+			for line in f:
+				line_elements = line.split('\t')
+				if line.startswith("#"):
+					if line_elements[0] == "##sequence-region" and line_elements[1] == chrom_id:
+						## Edit the length of the chromosome 
+						original_length = int(line_elements[3])
+						new_length = original_length - (down_position - position) + new_seq_length
+						line = line.replace(str(original_length), str(new_length))
 					gff_out.write(line)
-					
-				# Modify chromosome feature length (if feature is 
-				# "chromosome" or "region")
-				elif gff_feat_type in ['chromosome', 'region']:
-					original_length = gff_feat_end
-					new_length = original_length - (down_position - position) + new_seq_length
-					line = line.replace(str(original_length), str(new_length))
-					gff_out.write(line)
-					
-				# Split feature into 2 if feature starts before position
-				# and ends after down_position
-				elif gff_feat_start <= position and gff_feat_end > down_position:
-					print("Feature split")
-					# Which side of the feature depends on the strand (we add this as a comment)
-					(x, y) = ("5", "3") if gff_feat_strand == "+" else ("3", "5")
-					
-					new_comment = format_comment(
-						"original feature split by inserted sequence, this is the {} prime end".format(x),
-						gff_ext
-					)
-					# Modified feature ends at 'position'
-					modified_line = modify_gff_line( 
-						line_elements, 
-						end = position, 
-						comment = gff_comments + new_comment
-					)
-					gff_out.write(modified_line)
-					
-					# The downstream flank(s) will be added immediately after the 
-					# in_gff (new) features are written.
-					# First, attempt to rename IDs (to indicate split)
-					renamed_id_attributes = rename_id(line)
-					new_comment = format_comment(
-						"original feature split by inserted sequence, this is the {} prime end".format(y),
-						gff_ext
-					)
-					split_features.append(
-						(
-							line_elements, 
-							position + new_seq_length + 1, 
-							gff_feat_end + new_seq_length - (down_position - position), 
-							renamed_id_attributes + new_comment 
-						)
-					)
-				
-				# Change end position of feature to cut off point (position) if the
-				# feature ends within the deletion (between position & down_position)
-				elif gff_feat_start <= position and gff_feat_end <= down_position:
-					# Which side of the feature depends on the strand (we add this as a comment)
-					x = "3" if gff_feat_strand == "+" else "5"
-					print("Feature cut off - {} prime side of feature cut off ({} strand)"
-						.format(x, gff_feat_strand))
-					new_comment = format_comment(
-						"{} prime side of feature cut-off by inserted sequence".format(x),
-						gff_ext
-					)
-					modified_line = modify_gff_line(
-						line_elements, 
-						end = position, 
-						comment = gff_comments + new_comment 
-					)
-					gff_out.write(modified_line)
-				
-				# Skip this feature if it falls entirely within the deletion 
-				elif gff_feat_start > position and gff_feat_end <= down_position:
-					print("Skip feature (this feature was removed from sequence)")
-					continue
-					
 				else:
-					if not in_gff_lines_appended:
+					gff_chrom_id = line_elements[0]
+					gff_feat_start = int(line_elements[3])
+					gff_feat_end = int(line_elements[4])
+					gff_feat_type = line_elements[2]
+					gff_feat_strand = line_elements[6]
+					gff_comments = line_elements[8].strip()
+					
+					# If we've seen at least one chromosome
+					# and the last chromosome seen was the chromosome of interest (i.e. chrom_id)
+					# and now we're on a new chromosome in the original gff file
+					# and the in_gff_lines have not yet been appended:
+					# we assume they need to be appended to the end of the chromosome
+					# so append them before proceeding
+					if (last_seen_chrom_id is not None
+						and last_seen_chrom_id == chrom_id
+						and gff_chrom_id != last_seen_chrom_id 
+						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
 							gff_out, in_gff_lines, position, split_features)
+					
+					last_seen_chrom_id = gff_chrom_id
+					
+					# If this is not the chromosome of interest
+					# Or if the current feature ends before any 
+					# modification (which occurs at position)
+					# Then simply write the feature as is (no modification)
+					# (remember gff co-ordinates are 1 based and position 
+					# is 0 based, therefor check less than *or equal to*)
+					if gff_chrom_id != chrom_id or gff_feat_end <= position:
+						gff_out.write(line)
 						
-					# Change start position of feature to after cutoff point if
-					# the feature starts within the deletion
-					if (gff_feat_start > position 
-						and gff_feat_start <= down_position 
-						and gff_feat_end > down_position):
-						x = "5" if gff_feat_strand == "+" else "3"
+					# Modify chromosome feature length (if feature is 
+					# "chromosome" or "region")
+					elif gff_feat_type in ['chromosome', 'region']:
+						original_length = gff_feat_end
+						new_length = original_length - (down_position - position) + new_seq_length
+						line = line.replace(str(original_length), str(new_length))
+						gff_out.write(line)
+						
+					# Split feature into 2 if feature starts before position
+					# and ends after down_position
+					elif gff_feat_start <= position and gff_feat_end > down_position:
+						print("Feature split")
+						# Which side of the feature depends on the strand (we add this as a comment)
+						(x, y) = ("5", "3") if gff_feat_strand == "+" else ("3", "5")
+						
+						new_comment = format_comment(
+							"original feature split by inserted sequence, this is the {} prime end".format(x),
+							gff_ext
+						)
+						# Modified feature ends at 'position'
+						modified_line = modify_gff_line( 
+							line_elements, 
+							end = position, 
+							comment = gff_comments + new_comment
+						)
+						gff_out.write(modified_line)
+						
+						# The downstream flank(s) will be added immediately after the 
+						# in_gff (new) features are written.
+						# First, attempt to rename IDs (to indicate split)
+						renamed_id_attributes = rename_id(line)
+						new_comment = format_comment(
+							"original feature split by inserted sequence, this is the {} prime end".format(y),
+							gff_ext
+						)
+						split_features.append(
+							(
+								line_elements, 
+								position + new_seq_length + 1, 
+								gff_feat_end + new_seq_length - (down_position - position), 
+								renamed_id_attributes + new_comment 
+							)
+						)
+					
+					# Change end position of feature to cut off point (position) if the
+					# feature ends within the deletion (between position & down_position)
+					elif gff_feat_start <= position and gff_feat_end <= down_position:
+						# Which side of the feature depends on the strand (we add this as a comment)
+						x = "3" if gff_feat_strand == "+" else "5"
 						print("Feature cut off - {} prime side of feature cut off ({} strand)"
 							.format(x, gff_feat_strand))
 						new_comment = format_comment(
@@ -331,47 +333,74 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						)
 						modified_line = modify_gff_line(
 							line_elements, 
-							start = position + new_seq_length + 1, 
-							end = gff_feat_end + new_seq_length - (down_position - position), 
-							comment = gff_comments + new_comment
+							end = position, 
+							comment = gff_comments + new_comment 
 						)
 						gff_out.write(modified_line)
-						
-					# Offset all downstream feature positions by offset length
-					elif gff_feat_start > down_position:
-						offset_length = new_seq_length - (down_position - position)
-						modified_line = modify_gff_line(
-							line_elements, 
-							start = gff_feat_start + offset_length, 
-							end = gff_feat_end + offset_length
-						)
-						gff_out.write(modified_line)
+					
+					# Skip this feature if it falls entirely within the deletion 
+					elif gff_feat_start > position and gff_feat_end <= down_position:
+						print("Skip feature (this feature was removed from sequence)")
+						continue
 						
 					else:
-						print("** Error: Unknown case for GFF modification. Exiting " + str(line_elements))
-						exit()
-						
-		# If we've iterated over the entire original gff
-		# (i.e. out of the for loop which iterates over it)
-		# and still haven't written in_gff_lines
-		# and the last chromosome seen was the chromosome of interest (i.e. chrom_id):
-		# we assume they need to be appended to the end of the genome
-		# (i.e. end of the last chromosome)
-		# so append them now
-		if (last_seen_chrom_id is not None 
-			and last_seen_chrom_id == chrom_id
-			and not in_gff_lines_appended):
-			in_gff_lines_appended = write_in_gff_lines(
-				gff_out, in_gff_lines, position, split_features)
-		
-		# Checking to ensure in_gff_lines written
-		if not in_gff_lines_appended:
-			print("** Error: Something went wrong, in_gff not added to reference gff. Exiting")
-			exit()
-		
-	gff_out.close()	
-	
-	return gff_out
+						if not in_gff_lines_appended:
+							in_gff_lines_appended = write_in_gff_lines(
+								gff_out, in_gff_lines, position, split_features)
+							
+						# Change start position of feature to after cutoff point if
+						# the feature starts within the deletion
+						if (gff_feat_start > position 
+							and gff_feat_start <= down_position 
+							and gff_feat_end > down_position):
+							x = "5" if gff_feat_strand == "+" else "3"
+							print("Feature cut off - {} prime side of feature cut off ({} strand)"
+								.format(x, gff_feat_strand))
+							new_comment = format_comment(
+								"{} prime side of feature cut-off by inserted sequence".format(x),
+								gff_ext
+							)
+							modified_line = modify_gff_line(
+								line_elements, 
+								start = position + new_seq_length + 1, 
+								end = gff_feat_end + new_seq_length - (down_position - position), 
+								comment = gff_comments + new_comment
+							)
+							gff_out.write(modified_line)
+							
+						# Offset all downstream feature positions by offset length
+						elif gff_feat_start > down_position:
+							offset_length = new_seq_length - (down_position - position)
+							modified_line = modify_gff_line(
+								line_elements, 
+								start = gff_feat_start + offset_length, 
+								end = gff_feat_end + offset_length
+							)
+							gff_out.write(modified_line)
+							
+						else:
+							print("** Error: Unknown case for GFF modification. Exiting " + str(line_elements))
+							exit()
+							
+			# If we've iterated over the entire original gff
+			# (i.e. out of the for loop which iterates over it)
+			# and still haven't written in_gff_lines
+			# and the last chromosome seen was the chromosome of interest (i.e. chrom_id):
+			# we assume they need to be appended to the end of the genome
+			# (i.e. end of the last chromosome)
+			# so append them now
+			if (last_seen_chrom_id is not None 
+				and last_seen_chrom_id == chrom_id
+				and not in_gff_lines_appended):
+				in_gff_lines_appended = write_in_gff_lines(
+					gff_out, in_gff_lines, position, split_features)
+			
+			# Checking to ensure in_gff_lines written
+			if not in_gff_lines_appended:
+				print("** Error: Something went wrong, in_gff not added to reference gff. Exiting")
+				exit()
+	return new_gff_name
+
 def format_comment(comment, ext):
 	'''
 	Format comment according to ext (GFF or GTF) and return
@@ -409,13 +438,13 @@ def get_input_args():
 	
 	parser.add_argument('--chrom', type = str, required = True,
 					help = "Chromosome name (String)") 
-	parser.add_argument('--in_fasta', nargs='+', type=str, required=True,
+	parser.add_argument('--in_fasta', type=str, required=True,
                     help="Path(s) to new sequence(s) to be inserted into reference genome in fasta format") 
-	parser.add_argument('--in_gff', nargs='+', type=str, required=True,
+	parser.add_argument('--in_gff', type=str, required=True,
                     help="Path(s) to GFF file(s) describing new fasta sequence(s) to be inserted") 
-	parser.add_argument('--upstream_fasta', nargs='+', type=str, default=None, 
+	parser.add_argument('--upstream_fasta', type=str, default=None, 
                     help="Path(s) to Fasta file(s) with upstream sequence. Either position, or upstream AND downstream sequence must be provided.")
-	parser.add_argument('--downstream_fasta', nargs='+', type=str, default=None, 
+	parser.add_argument('--downstream_fasta', type=str, default=None, 
                     help="Path(s) to Fasta file(s) with downstream sequence. Either position, or upstream AND downstream sequence must be provided.")
 	parser.add_argument('--position', type=str, default=None,
                     help="Comma-separated positions at which to insert new sequence. Note: Position is 0-based, no space between each comma. Either position, or upstream AND downstream sequence must be provided.")
@@ -425,7 +454,13 @@ def get_input_args():
 					help = "Path to reference gff file") 
 					
 	in_args = parser.parse_args()
-	
+	in_args.in_fasta = in_args.in_fasta.split(',')
+	in_args.in_gff = in_args.in_gff.split(',')
+	if in_args.upstream_fasta:
+		in_args.upstream_fasta = in_args.upstream_fasta.split(',')
+	if in_args.downstream_fasta:
+		in_args.downstream_fasta = in_args.downstream_fasta.split(',')
+
 	if in_args.position is None and (in_args.upstream_fasta is None or in_args.downstream_fasta is None):
 		print("** Error: You must provide either the position, or the upstream and downstream sequences.")
 		exit()
@@ -452,14 +487,14 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
-	
-	# # Temp code for step 1 and test, will be remove later
-	# args = get_input_args()
+	# Temp code for step 1 and test, will be remove later
+	# args, iterations = get_input_args()
+	# print("iterations:", iterations)
 	# print("Chromosome:", args.chrom)
 	# print("Input FASTA files:", args.in_fasta)
 	# print("Input GFF files:", args.in_gff)
+	# print("Reference FASTA file:", args.ref_fasta)
+	# print("Reference GFF file:", args.ref_gff)
 	# print("Upstream FASTA files:", args.upstream_fasta)
 	# print("Downstream FASTA files:", args.downstream_fasta)
 	# print("Position:", list(map(int, args.position.split(','))))
-	# print("Reference FASTA file:", args.ref_fasta)
-	# print("Reference GFF file:", args.ref_gff)
