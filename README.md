@@ -32,9 +32,9 @@ python3 reform.py
 
 `position` Position in chromosome at which to insert <in_fasta>. Can use `-1` to add to end of chromosome. Note: Either position, or upstream AND downstream sequence must be provided. **Note: Position is 0-based**
 
-`upsteam_fasta` Path to Fasta file with upstream sequence. Note: Either position, or upstream AND downstream sequence must be provided.
+`upstream_fasta` Path to Fasta file with upstream sequence. Note: Either position, or upstream AND downstream sequence must be provided.
 
-`downsteam_fasta` Path to Fasta file with downstream sequence. Note: Either position, or upstream AND downstream sequence must be provided.
+`downstream_fasta` Path to Fasta file with downstream sequence. Note: Either position, or upstream AND downstream sequence must be provided.
 
 `in_fasta` Path to new sequence to be inserted into reference genome in fasta format.
 

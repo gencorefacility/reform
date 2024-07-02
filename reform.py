@@ -2,6 +2,7 @@
 import argparse
 import re
 import os
+import gzip
 import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -18,6 +19,7 @@ def main():
 	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
 	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
 	
+
 	# TODO: modify the postion from up.fa and down.fa
 	
 	## List for previous postion and modification length
@@ -34,10 +36,10 @@ def main():
 		
 		## Generate index of sequences from ref reference fasta
 		if prev_fasta_path:
-			chrom_seqs = SeqIO.index(prev_fasta_path,'fasta')
+			chrom_seqs = index_fasta(prev_fasta_path)
 			os.remove(prev_fasta_path)
 		else:	
-			chrom_seqs = SeqIO.index(in_arg.ref_fasta,'fasta')
+			chrom_seqs = index_fasta(in_arg.ref_fasta)
 		
 		## Obtain the sequence of the chromosome we want to modify
 		seq = chrom_seqs[in_arg.chrom]
@@ -78,8 +80,8 @@ def main():
 			new_fasta = new_fasta_file.name
 			prev_fasta_path = new_fasta
 		else:
-			ref_basename = os.path.basename(in_arg.ref_fasta)
-			ref_name = os.path.splitext(ref_basename)[0]
+			ref_basename, _ = get_ref_basename(in_arg.ref_fasta)
+			ref_name = ref_basename
 			new_fasta = ref_name + '_reformed.fa'
 		with open(new_fasta, "w") as f:
 			for s in chrom_seqs:
@@ -95,8 +97,8 @@ def main():
 		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
 		
 		## Create a temp file for gff, if index is not equal to last iteration
-		annotation_basename = os.path.basename(in_arg.ref_gff)
-		(annotation_name, annotation_ext) = os.path.splitext(annotation_basename)
+		annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
+		print(in_arg.ref_gff)
 		if index < iterations - 1:
 			temp_gff = tempfile.NamedTemporaryFile(delete=False, mode='w', suffix=annotation_ext)
 			temp_gff_name = temp_gff.name
@@ -114,7 +116,39 @@ def main():
 				new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 		prev_gff_path = new_gff_path
 		print("New {} file created: {} ".format(annotation_ext.upper(), prev_gff_path))
-		
+
+
+def index_fasta(fasta_path):
+	'''
+	Process incoming FASTA files, supporting both decompressed and uncompressed 
+	formats. It takes a file path (fasta_path), decompresses the file into a 
+	temporary file if it is a compressed file ending in .gz, and then indexes 
+	the temporary file. Finally, the indexing result is returned.
+	'''
+	if fasta_path.endswith('.gz'):
+		with gzip.open(fasta_path, 'rt') as f:
+            		# Create a tempfile to store uncompressde content
+			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+				tmp_f.write(f.read())
+				tmp_f_path = tmp_f.name
+		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
+        	# remove temp file
+		os.remove(tmp_f_path)
+	else:
+		chrom_seqs = SeqIO.index(fasta_path, 'fasta')
+	return chrom_seqs
+
+def get_ref_basename(filepath):
+	'''
+	Takes a filepath and returns the filename and extension minus the .gz.
+	'''
+	base = os.path.basename(filepath)
+	if base.endswith('.gz'):
+		base = base[:-3]  # remove .gz
+	name, ext = os.path.splitext(base)
+	return name, ext
+
+
 def modify_gff_line(elements, start=None, end=None, comment=None):
 	'''
 	Modifies an existing GFF line and returns the modified line. Currently, you can 
@@ -252,7 +286,14 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		split_features = []
 		last_seen_chrom_id = None
 		gff_ext = new_gff_name.split('.')[-1]
-		with open(ref_gff, "r") as f:
+		ref_gff_path = ref_gff
+		if ref_gff.endswith('.gz'):
+			with gzip.open(ref_gff, 'rt') as f:
+						# Create a tempfile to store uncompressde content
+				with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+					tmp_f.write(f.read())
+					ref_gff_path = tmp_f.name
+		with open(ref_gff_path, "r") as f:
 			for line in f:
 				line_elements = line.split('\t')
 				if line.startswith("#"):
@@ -417,6 +458,9 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 			if not in_gff_lines_appended:
 				print("** Error: Something went wrong, in_gff not added to reference gff. Exiting")
 				exit()
+		# Remove temp gtf file
+		if ref_gff.endswith('.gz'):
+			os.remove(ref_gff_path)
 	return new_gff_name
 
 def format_comment(comment, ext):

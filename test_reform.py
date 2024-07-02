@@ -480,6 +480,87 @@ class TestReform(unittest.TestCase):
 		
 		os.chdir(wd)
 	
+
+	def test_case_12(self):
+		"""
+		Case 12:
+		Testing Case 2 with .gz ref sequence input
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/12/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--upstream_fasta=up.fa \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa.gz \
+		--ref_gff=ref.gtf.gz \
+		--downstream_fasta=down.fa
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+	
+	def test_case_13(self):
+		"""
+		Case 13:
+		Testing Case 10 with .gz ref sequence input
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/13/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa.gz \
+		--ref_gff=ref.gtf.gz \
+		--position=-1
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
 	
 	def test_case_14(self):
 		"""
@@ -489,7 +570,7 @@ class TestReform(unittest.TestCase):
 
 		wd = os.getcwd()
 		os.chdir('test_data/14/')
-		
+
 		command = """
 		python3 ../../reform.py \
 		--chrom="X" \
