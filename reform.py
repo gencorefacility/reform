@@ -18,12 +18,16 @@ def main():
 	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
 	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
 	
-	# TODO: list for prev pos and record
-	## Store the postion of previous modification and lenght
+	# TODO: modify the postion from up.fa and down.fa
+	
+	## List for previous postion and modification length
+	prev_modifications = []
 
+	## Path for the files generated in sequential processing, mainly managed by tempfile.
 	prev_fasta_path = None
 	prev_gff_path = None
 
+	## Sequential processing
 	for index in range(iterations):
 		## Read the new fasta (to be inserted into the ref genome)
 		record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
@@ -40,9 +44,17 @@ def main():
 		seq_str = str(seq.seq)
 		
 		## Get the position to insert the new sequence
-		positions = get_position(index, in_arg.position, in_arg.upstream_fasta, in_arg.downstream_fasta, in_arg.chrom, seq_str)
+		positions = get_position(index, in_arg.position, in_arg.upstream_fasta, in_arg.downstream_fasta, in_arg.chrom, seq_str, prev_modifications)
 		position = positions['position']
 		down_position = positions['down_position']
+		
+		## Save current modification which include position(index) and length changed.
+		if position == down_position:
+			length_changed = len(str(record.seq))
+		else:
+			length_changed = len(str(record.seq)) - (down_position - position - 1)
+		prev_modifications.append((position,length_changed))
+		
 		if position != down_position:
 			print("Removing nucleotides from position {} - {}".format(position, down_position))
 		print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}"
@@ -147,7 +159,7 @@ def get_in_gff_lines(in_gff):
 			in_gff_lines.append(line_elements)
 	return in_gff_lines
 	
-def get_position(index, positions, upstream, downstream, chrom, seq_str):
+def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_modifications):
 	''' 
 	Determine the position in seq_str to insert the new sequence given 
 	the position, upstream, downstream, and chrom arguments.
@@ -157,6 +169,11 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str):
 	if positions and index < len(positions) and positions[index] >= -1:
 		print("Checking position validity")
 		position = positions[index]
+		## Update current postion based on previous modification
+		for pos, lc in prev_modifications:
+			## Also ignore when postion == -1
+			if position >= pos:
+				position += lc
 		if position > len(seq_str):
 			print("** ERROR: Position greater than length of chromosome.")
 			print("Chromosome: {}\Chromosome length: {}\nPosition: \n{}".format(chrom, len(seq_str), position))
@@ -178,6 +195,7 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str):
 			# Ensure the upstream and downstream target sequences exists once in the selected chromosome, else die
 			upstream_seq_count = seq_str.count(upstream_seq)
 			downstream_seq_count = seq_str.count(downstream_seq)
+			### TODO: Update postion based on previous modifications
 			if upstream_seq_count == 1 and downstream_seq_count == 1:
 				## Obtain the starting position of the left_strand
 				new_index = seq_str.find(upstream_seq)

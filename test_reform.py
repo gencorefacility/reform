@@ -539,7 +539,7 @@ class TestReform(unittest.TestCase):
 		--in_gff=in1.gtf,in2.gtf,in3.gtf \
 		--ref_fasta=ref.fa \
 		--ref_gff=ref.gtf \
-		--position=0,-1,5
+		--position=0,5,-1
 		"""
 
 		response = subprocess.getoutput(command)
