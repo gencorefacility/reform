@@ -2,7 +2,7 @@
 import argparse
 import re
 import os
-import gzip
+import pgzip
 import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -73,11 +73,12 @@ def index_fasta(fasta_path):
 	the temporary file. Finally, the indexing result is returned.
 	'''
 	if fasta_path.endswith('.gz'):
-		with gzip.open(fasta_path, 'rt') as f:
-            		# Create a tempfile to store uncompressde content
-			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+		# Create a tempfile to store uncompressde content
+		with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+			tmp_f_path = tmp_f.name
+			# Use pgzip to decompress parallely. Set thread=None means use all cores
+			with pgzip.open(fasta_path, 'rt', thread=None) as f:
 				tmp_f.write(f.read())
-				tmp_f_path = tmp_f.name
 		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
         	# remove temp file
 		os.remove(tmp_f_path)
@@ -227,7 +228,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 	gff_ext = new_gff_name.split('.')[-1]
 
 	if ref_gff.endswith('.gz'):
-		open_func = gzip.open
+		open_func = pgzip.open
 	else:
 		open_func = open
 	with open_func(ref_gff, "rt") as f:
