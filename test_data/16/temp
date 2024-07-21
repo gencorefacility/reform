@@ -1,0 +1,1 @@
+python3 ../../reform.py --chrom="X" --in_fasta=in.fa --in_gff=in.gtf --ref_fasta=ref.fa --ref_gff=ref.gtf --position=-1

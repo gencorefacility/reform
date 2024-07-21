@@ -249,8 +249,10 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 		exit()
 	return {'position': position, 'down_position': down_position}
 
-def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, chrom):
 	for l in in_gff_lines:
+		# Replace the chromosome ID from in_gff with the correct chromosome ID
+		l[0] = chrom
 		new_gff_line = modify_gff_line(
 			l, start = int(l[3]) + position, end = int(l[4]) + position)
 		gff_out.write(new_gff_line)
@@ -258,6 +260,8 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
 	## If insertion caused any existing features to be split, add
 	## the split features now immediately after adding the new features
 	for sf in split_features:
+		# Make sure split feature also has the correct chromosome ID
+		sf[0][0] = chrom
 		modified_line = modify_gff_line(
 			sf[0], start = sf[1], end = sf[2], comment = sf[3])
 		gff_out.write(modified_line)
@@ -289,7 +293,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		ref_gff_path = ref_gff
 		if ref_gff.endswith('.gz'):
 			with gzip.open(ref_gff, 'rt') as f:
-						# Create a tempfile to store uncompressde content
+				# Create a tempfile to store uncompressde content
 				with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 					tmp_f.write(f.read())
 					ref_gff_path = tmp_f.name
@@ -322,7 +326,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						and gff_chrom_id != last_seen_chrom_id 
 						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
-							gff_out, in_gff_lines, position, split_features)
+							gff_out, in_gff_lines, position, split_features, chrom_id)
 					
 					last_seen_chrom_id = gff_chrom_id
 					
@@ -452,7 +456,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				and last_seen_chrom_id == chrom_id
 				and not in_gff_lines_appended):
 				in_gff_lines_appended = write_in_gff_lines(
-					gff_out, in_gff_lines, position, split_features)
+					gff_out, in_gff_lines, position, split_features, chrom_id)
 			
 			# Checking to ensure in_gff_lines written
 			if not in_gff_lines_appended:
