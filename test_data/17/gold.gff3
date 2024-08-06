@@ -1,0 +1,6 @@
+X	ref	exon	5	5	.	+	0	ID=ref_gene; transcript_id=ref_gene.1; reform_comment=original feature split by inserted sequence, this is the 5 prime end
+X	new	exon	6	15	.	+	0	ID=new; transcript_id=new.1
+X	ref	exon	16	35	.	+	0	ID=ref_gene_split; transcript_id=ref_gene.1; reform_comment=original feature split by inserted sequence, this is the 3 prime end
+X	ref	CDS	18	32	.	+	0	ID=ref_gene; transcript_id=ref_gene.1
+X	ref	start_codon	5	5	.	+	0	ID=ref_gene; transcript_id=ref_gene.1; reform_comment=original feature split by inserted sequence, this is the 5 prime end
+X	ref	stop_codon	33	35	.	+	0	ID=ref_gene; transcript_id=ref_gene.1

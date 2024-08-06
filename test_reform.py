@@ -644,5 +644,116 @@ class TestReform(unittest.TestCase):
 		
 		os.chdir(wd)
 
+	def test_case_16(self):
+		"""
+		Case 10:
+		Use chromosome name from '--chrom' when chrom_id in in.gtf is different from ref.gtf
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/16/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		--position=-1
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+	
+	def test_case_17(self):
+		"""
+		Case 17:
+		The format of the insert files is different from that of the reference file.
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/17/')
+		
+		# ref.gff3 with in.gtf
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gff3 \
+		--position=5
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+
+		with open('gold.gff3', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gff3', 'r') as f:
+			new_gff = f.read()
+		print("Testing GFF3")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+
+		# ref.gtf with in.gff3
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gff3 \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		--position=5
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+
 if __name__ == '__main__':
     unittest.main()

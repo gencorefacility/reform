@@ -11,16 +11,6 @@ from Bio.SeqRecord import SeqRecord
 def main():
 	## Retrieve command line arguments and number of iterations
 	in_arg, iterations = get_input_args()
-
-	# ## Temp code for step 2 and test, will be remove later
-	# in_arg.in_fasta = in_arg.in_fasta[0]
-	# in_arg.in_gff = in_arg.in_gff[0]
-	# in_arg.upstream_fasta = in_arg.upstream_fasta[0] if in_arg.upstream_fasta else in_arg.upstream_fasta
-	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
-	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
-	
-
-	# TODO: modify the postion from up.fa and down.fa
 	
 	## List for previous postion and modification length
 	prev_modifications = []
@@ -94,7 +84,7 @@ def main():
 		print("Preparing to create new annotation file")
 		
 		## Read in new GFF features from in_gff
-		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
+		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index], in_arg.ref_gff)
 		
 		## Create a temp file for gff, if index is not equal to last iteration
 		annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
@@ -172,11 +162,13 @@ def modify_gff_line(elements, start=None, end=None, comment=None):
 	## Return the modified line
 	return("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(elements[0], elements[1], elements[2], start, end, elements[5], elements[6], elements[7], comment))
 	
-def get_in_gff_lines(in_gff):
+def get_in_gff_lines(in_gff, ref_gff):
 	'''
 	Takes a gff file and returns a list of lists where 
 	each parent list item is a single line of the gff file
-	and the child elements are the columns of the line
+	and the child elements are the columns of the line.
+	Convert format when insert file has different format
+	from ref file.
 	'''
 	with open(in_gff, "r") as f:
 		in_gff_lines = []
@@ -191,6 +183,11 @@ def get_in_gff_lines(in_gff):
 				print(line_elements)
 				exit()
 			in_gff_lines.append(line_elements)
+	# Ensure format consistency
+	if in_gff.endswith('.gff3') and ref_gff.endswith('.gtf'):
+		return [convert_gff3_to_gtf('\t'.join(line) + '\n').strip().split('\t') for line in in_gff_lines]
+	elif in_gff.endswith('.gtf') and ref_gff.endswith('.gff3'):
+		return [convert_gtf_to_gff3('\t'.join(line) + '\n').strip().split('\t') for line in in_gff_lines]
 	return in_gff_lines
 	
 def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_modifications):
@@ -249,8 +246,10 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 		exit()
 	return {'position': position, 'down_position': down_position}
 
-def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, chrom):
 	for l in in_gff_lines:
+		# Replace the chromosome ID from in_gff with the correct chromosome ID
+		l[0] = chrom
 		new_gff_line = modify_gff_line(
 			l, start = int(l[3]) + position, end = int(l[4]) + position)
 		gff_out.write(new_gff_line)
@@ -258,6 +257,8 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
 	## If insertion caused any existing features to be split, add
 	## the split features now immediately after adding the new features
 	for sf in split_features:
+		# Make sure split feature also has the correct chromosome ID
+		sf[0][0] = chrom
 		modified_line = modify_gff_line(
 			sf[0], start = sf[1], end = sf[2], comment = sf[3])
 		gff_out.write(modified_line)
@@ -289,7 +290,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		ref_gff_path = ref_gff
 		if ref_gff.endswith('.gz'):
 			with gzip.open(ref_gff, 'rt') as f:
-						# Create a tempfile to store uncompressde content
+				# Create a tempfile to store uncompressde content
 				with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 					tmp_f.write(f.read())
 					ref_gff_path = tmp_f.name
@@ -322,7 +323,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						and gff_chrom_id != last_seen_chrom_id 
 						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
-							gff_out, in_gff_lines, position, split_features)
+							gff_out, in_gff_lines, position, split_features, chrom_id)
 					
 					last_seen_chrom_id = gff_chrom_id
 					
@@ -405,7 +406,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						if not in_gff_lines_appended:
 							in_gff_lines_appended = write_in_gff_lines(
-								gff_out, in_gff_lines, position, split_features)
+								gff_out, in_gff_lines, position, split_features, chrom_id)
 							
 						# Change start position of feature to after cutoff point if
 						# the feature starts within the deletion
@@ -452,7 +453,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				and last_seen_chrom_id == chrom_id
 				and not in_gff_lines_appended):
 				in_gff_lines_appended = write_in_gff_lines(
-					gff_out, in_gff_lines, position, split_features)
+					gff_out, in_gff_lines, position, split_features, chrom_id)
 			
 			# Checking to ensure in_gff_lines written
 			if not in_gff_lines_appended:
@@ -475,6 +476,50 @@ def format_comment(comment, ext):
 		print("** Error: Unrecognized extension {} in format_comment(). Exiting".format(ext))
 		exit()
 	return new_comment
+
+def convert_gtf_to_gff3(gtf_line):
+	'''
+	Converts a single GTF format line to GFF3 format.
+    This function performs the following transformations:
+    1. Replaces spaces (' ') with equals signs ('=') in the attribute field.
+    2. Replaces 'gene_id' with 'ID'.
+    3. Removes double quotes around attribute values.
+	gtf_line: A single line from a GTF file.
+	'''
+	fields = gtf_line.strip().split('\t')
+	attributes = fields[8].strip().strip(';').split('; ')
+	# convert gene_id to ID, remove all ""
+	attributes = [attr.replace(' ', '=').replace('gene_id', 'ID').replace('"', '') for attr in attributes]
+	fields[8] = '; '.join(attributes)
+	return '\t'.join(fields) + '\n'
+
+def convert_gff3_to_gtf(gff3_line):
+	'''
+	Converts a single GFF3 format line to GTF format.
+    This function performs the following transformations:
+    1. Replaces equals signs ('=') with spaces (' ') in the attribute field.
+    2. Replaces 'ID' with 'gene_id'.
+    3. Adds double quotes around attribute values.
+    gff3_line (str): A single line from a GFF3 file.
+	'''
+	fields = gff3_line.strip().split('\t')
+	attributes = fields[8].strip().strip(';').split(';')
+	new_attributes = []
+	for attr in attributes:
+		if '=' in attr:
+			# Only split one time
+			k, v = attr.split('=', 1)
+			# Replace ID into gene_id
+			if k == 'ID':
+				k = 'gene_id'
+			# Remove space in key
+			elif ' ' in k:
+				k = k.strip()
+			new_attributes.append('{} "{}"'.format(k, v))
+		else:
+			new_attributes.append(attr)
+	fields[8] = '; '.join(new_attributes) + ';'
+	return '\t'.join(fields) + '\n'
 	
 def rename_id(line):
 	'''
@@ -549,14 +594,3 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
-	# Temp code for step 1 and test, will be remove later
-	# args, iterations = get_input_args()
-	# print("iterations:", iterations)
-	# print("Chromosome:", args.chrom)
-	# print("Input FASTA files:", args.in_fasta)
-	# print("Input GFF files:", args.in_gff)
-	# print("Reference FASTA file:", args.ref_fasta)
-	# print("Reference GFF file:", args.ref_gff)
-	# print("Upstream FASTA files:", args.upstream_fasta)
-	# print("Downstream FASTA files:", args.downstream_fasta)
-	# print("Position:", list(map(int, args.position.split(','))))
