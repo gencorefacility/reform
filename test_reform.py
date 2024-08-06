@@ -4,6 +4,21 @@ import subprocess
 import os
 
 class TestReform(unittest.TestCase):
+	def setUp(self):
+		self.wd = os.getcwd()
+		self.cleanup()  # Clean up before each test case
+
+	def tearDown(self):
+		os.chdir(self.wd)
+		self.cleanup()  # Clean up after each test case
+
+	def cleanup(self):
+		print("Clean Up")
+		# Cleanup command to remove ref_reformed.fa and ref_reformed.gtf files
+		cleanup_command = 'find test_data/ -type f \( -name "ref_reformed.fa" -o -name "ref_reformed.gtf" -o -name "ref_reformed.gff3" \) -exec rm -f {} +'
+		os.system(cleanup_command)
+		print("Done")
+	
 	def test_case_1(self):
 		"""
 		Case 1:
@@ -465,6 +480,7 @@ class TestReform(unittest.TestCase):
 		
 		os.chdir(wd)
 	
+
 	def test_case_12(self):
 		"""
 		Case 12:
@@ -545,6 +561,88 @@ class TestReform(unittest.TestCase):
 		print("Done")
 		
 		os.chdir(wd)
+	
+	def test_case_14(self):
+		"""
+		Case 14:
+		Testing Sequential Processing which use multiple up.fa and down.fa files
+		"""
+
+		wd = os.getcwd()
+		os.chdir('test_data/14/')
+
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--upstream_fasta=up1.fa,up2.fa,up3.fa \
+		--in_fasta=in1.fa,in2.fa,in3.fa \
+		--in_gff=in1.gtf,in2.gtf,in3.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		--downstream_fasta=down1.fa,down2.fa,down3.fa
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
 		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+
+
+	def test_case_15(self):
+		"""
+		Case 15:
+		Testing Sequential Processing which combine test case 9, 10, 11
+		"""
+		
+		wd = os.getcwd()
+		os.chdir('test_data/15/')
+		
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in1.fa,in2.fa,in3.fa \
+		--in_gff=in1.gtf,in2.gtf,in3.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		--position=0,5,-1
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing gtf")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		os.chdir(wd)
+
 if __name__ == '__main__':
     unittest.main()
