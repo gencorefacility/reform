@@ -83,8 +83,9 @@ def main():
 		
 		print("Preparing to create new annotation file")
 		
-		## Read in new GFF features from in_gff
-		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index], in_arg.ref_gff)
+		## Read in new GFF features from in_gff.
+		## Use in_fasta length to ensure (end pos - start pos) is correct 
+		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index], in_arg.ref_gff, len(str(record.seq)))
 		
 		## Create a temp file for gff, if index is not equal to last iteration
 		annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
@@ -162,13 +163,13 @@ def modify_gff_line(elements, start=None, end=None, comment=None):
 	## Return the modified line
 	return("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(elements[0], elements[1], elements[2], start, end, elements[5], elements[6], elements[7], comment))
 	
-def get_in_gff_lines(in_gff, ref_gff):
+def get_in_gff_lines(in_gff, ref_gff, sequence_length):
 	'''
 	Takes a gff file and returns a list of lists where 
 	each parent list item is a single line of the gff file
 	and the child elements are the columns of the line.
 	Convert format when insert file has different format
-	from ref file.
+	from ref file. And correct the length of in.fa.
 	'''
 	with open(in_gff, "r") as f:
 		in_gff_lines = []
@@ -182,6 +183,14 @@ def get_in_gff_lines(in_gff, ref_gff):
 				print("** ERROR: in_gff file does not have 9 columns, it has", len(line_elements))
 				print(line_elements)
 				exit()
+			# Check the in.fa sequence length is correct
+			seq_id = line_elements[0]
+			start_pos = int(line_elements[3])
+			end_pos = int(line_elements[4])
+			if end_pos - start_pos + 1 != sequence_length:
+				 print(f"** WARNING: Inconsistent length for {seq_id}. Correcting end position.")
+				 # Correct the sequence length
+				 line_elements[4] = str(start_pos + sequence_length - 1)
 			in_gff_lines.append(line_elements)
 	# Ensure format consistency
 	if in_gff.endswith('.gff3') and ref_gff.endswith('.gtf'):
