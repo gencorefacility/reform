@@ -409,7 +409,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						if not in_gff_lines_appended:
 							in_gff_lines_appended = write_in_gff_lines(
-								gff_out, in_gff_lines, position, split_features)
+								gff_out, in_gff_lines, position, split_features, chrom_id)
 							
 						# Change start position of feature to after cutoff point if
 						# the feature starts within the deletion
