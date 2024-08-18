@@ -251,7 +251,7 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 
 def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, chrom):
 	for l in in_gff_lines:
-		# Replace the chromosome ID from in_gff with the correct chromosome ID
+		# Replace the original chromosome ID from in_gtf with chrom (seq.id)
 		l[0] = chrom
 		new_gff_line = modify_gff_line(
 			l, start = int(l[3]) + position, end = int(l[4]) + position)
@@ -260,7 +260,7 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, chrom):
 	## If insertion caused any existing features to be split, add
 	## the split features now immediately after adding the new features
 	for sf in split_features:
-		# Make sure split feature also has the correct chromosome ID
+		# Make sure splited feature also has the correct chromosome ID
 		sf[0][0] = chrom
 		modified_line = modify_gff_line(
 			sf[0], start = sf[1], end = sf[2], comment = sf[3])
@@ -282,7 +282,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		columns (in gff format) associated with each new feature to insert
 	position: start position of removal of existing sequence
 	down_position: end position of removal of existing sequence
-	chrom_id: the ID of the chromosome to modify
+	chrom_id: the ID of the chromosome to modify, which is seq.id
 	new_seq_length: the length of the new sequence being added to the chromosome
 	'''
 	with open(new_gff_name, "w") as gff_out:
