@@ -12,16 +12,6 @@ def main():
 	## Retrieve command line arguments and number of iterations
 	in_arg, iterations = get_input_args()
 
-	# ## Temp code for step 2 and test, will be remove later
-	# in_arg.in_fasta = in_arg.in_fasta[0]
-	# in_arg.in_gff = in_arg.in_gff[0]
-	# in_arg.upstream_fasta = in_arg.upstream_fasta[0] if in_arg.upstream_fasta else in_arg.upstream_fasta
-	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
-	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
-	
-
-	# TODO: modify the postion from up.fa and down.fa
-	
 	## List for previous postion and modification length
 	prev_modifications = []
 
@@ -549,14 +539,4 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
-	# Temp code for step 1 and test, will be remove later
-	# args, iterations = get_input_args()
-	# print("iterations:", iterations)
-	# print("Chromosome:", args.chrom)
-	# print("Input FASTA files:", args.in_fasta)
-	# print("Input GFF files:", args.in_gff)
-	# print("Reference FASTA file:", args.ref_fasta)
-	# print("Reference GFF file:", args.ref_gff)
-	# print("Upstream FASTA files:", args.upstream_fasta)
-	# print("Downstream FASTA files:", args.downstream_fasta)
-	# print("Position:", list(map(int, args.position.split(','))))
+	
