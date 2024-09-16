@@ -260,8 +260,6 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, chrom):
 	## If insertion caused any existing features to be split, add
 	## the split features now immediately after adding the new features
 	for sf in split_features:
-		# Make sure splited feature also has the correct chromosome ID
-		sf[0][0] = chrom
 		modified_line = modify_gff_line(
 			sf[0], start = sf[1], end = sf[2], comment = sf[3])
 		gff_out.write(modified_line)
