@@ -250,12 +250,54 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 		exit()
 	return {'position': position, 'down_position': down_position}
 
-def write_in_gff_lines(gff_out, in_gff_lines, position, split_features):
-	for l in in_gff_lines:
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence_length):
+	'''
+	in_gff_lines: a list of lists where each nested list is a list of 
+		columns (in gff format) associated with each new feature to insert
+	split_features: contains information about features in the original GFF 
+		file that were split due to the insertion of the new sequence.
+	sequence_length: length of the inserted sequence, used to determine 
+		the new end positions in the GFF file.
+	'''
+	# Handling of single-line comments
+	if len(in_gff_lines) == 1:
+		l = in_gff_lines[0]
+		## Check length
+		## l[3] is start position of fasta in in.gtf and l[4] is end position
+		seq_id = l[0]
+		if int(l[4]) - int(l[3]) + 1 != sequence_length:
+			print(f"** WARNING: Inconsistent length for {seq_id}. Correcting start position to 1 and end position to {sequence_length}.")
+		## Correct start(l[3]) to 1 and end(l[4]) to length of insert fasta
 		new_gff_line = modify_gff_line(
-			l, start = int(l[3]) + position, end = int(l[4]) + position)
+			l, start=1 + position, end=sequence_length + position)
 		gff_out.write(new_gff_line)
-	
+	# Handling of multiple-line comments
+	else:
+		### Step1: extract all start and end into corresponding set()
+		start_positions = set()
+		end_positions = set()
+		for l in in_gff_lines:
+			start_positions.add(int(l[3]))
+			end_positions.add(int(l[4]))
+		### Step2: Find min start and max end
+		min_start = min(start_positions)
+		max_end = max(end_positions)
+		### Step3: Check sequence length, validness of min_start and max_end
+		if max_end - min_start + 1 != sequence_length:
+			raise ValueError(f"Error: Annotation length does not match sequence length. "
+							f"Expected {sequence_length}, but got {max_end - min_start + 1}")
+		if min_start < 1:
+			raise ValueError(f"Error: Invalid min_start value: {min_start}. It must be a positive integer.")
+		if min_start > max_end:
+			raise ValueError(f"Error: min_start ({min_start}) cannot be greater than max_end ({max_end}).")
+		### Step4: Adjust start and end. Offset will be 0 if no adjust need
+		offset = min_start - 1
+		for l in in_gff_lines:
+			### Step5: Correct start(l[3]) and end(l[4]) by minus offset
+			new_gff_line = modify_gff_line(
+				l, start = int(l[3]) - offset + position, end = int(l[4]) - offset + position)
+			gff_out.write(new_gff_line)		
+
 	## If insertion caused any existing features to be split, add
 	## the split features now immediately after adding the new features
 	for sf in split_features:
@@ -323,7 +365,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						and gff_chrom_id != last_seen_chrom_id 
 						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
-							gff_out, in_gff_lines, position, split_features)
+							gff_out, in_gff_lines, position, split_features, new_seq_length)
 					
 					last_seen_chrom_id = gff_chrom_id
 					
@@ -406,7 +448,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						if not in_gff_lines_appended:
 							in_gff_lines_appended = write_in_gff_lines(
-								gff_out, in_gff_lines, position, split_features)
+								gff_out, in_gff_lines, position, split_features, new_seq_length)
 							
 						# Change start position of feature to after cutoff point if
 						# the feature starts within the deletion
@@ -453,7 +495,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				and last_seen_chrom_id == chrom_id
 				and not in_gff_lines_appended):
 				in_gff_lines_appended = write_in_gff_lines(
-					gff_out, in_gff_lines, position, split_features)
+					gff_out, in_gff_lines, position, split_features, new_seq_length)
 			
 			# Checking to ensure in_gff_lines written
 			if not in_gff_lines_appended:
