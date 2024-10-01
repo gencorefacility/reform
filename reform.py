@@ -2,7 +2,7 @@
 import argparse
 import re
 import os
-import gzip
+import pgzip
 import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -12,16 +12,6 @@ def main():
 	## Retrieve command line arguments and number of iterations
 	in_arg, iterations = get_input_args()
 
-	# ## Temp code for step 2 and test, will be remove later
-	# in_arg.in_fasta = in_arg.in_fasta[0]
-	# in_arg.in_gff = in_arg.in_gff[0]
-	# in_arg.upstream_fasta = in_arg.upstream_fasta[0] if in_arg.upstream_fasta else in_arg.upstream_fasta
-	# in_arg.downstream_fasta = in_arg.downstream_fasta[0] if in_arg.downstream_fasta else in_arg.downstream_fasta
-	# in_arg.position = in_arg.position[0] if in_arg.position else in_arg.position
-	
-
-	# TODO: modify the postion from up.fa and down.fa
-	
 	## List for previous postion and modification length
 	prev_modifications = []
 
@@ -126,11 +116,12 @@ def index_fasta(fasta_path):
 	the temporary file. Finally, the indexing result is returned.
 	'''
 	if fasta_path.endswith('.gz'):
-		with gzip.open(fasta_path, 'rt') as f:
-            		# Create a tempfile to store uncompressde content
-			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+		# Create a tempfile to store uncompressde content
+		with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+			tmp_f_path = tmp_f.name
+			# Use pgzip to decompress parallely. Set thread=None means use all cores
+			with pgzip.open(fasta_path, 'rt', thread=None) as f:
 				tmp_f.write(f.read())
-				tmp_f_path = tmp_f.name
 		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
         	# remove temp file
 		os.remove(tmp_f_path)
@@ -249,14 +240,57 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 		exit()
 	return {'position': position, 'down_position': down_position}
 
-def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, chrom):
-	for l in in_gff_lines:
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence_length):
+	'''
+	in_gff_lines: a list of lists where each nested list is a list of 
+		columns (in gff format) associated with each new feature to insert
+	split_features: contains information about features in the original GFF 
+		file that were split due to the insertion of the new sequence.
+	sequence_length: length of the inserted sequence, used to determine 
+		the new end positions in the GFF file.
+	'''
+  for l in in_gff_lines:
 		# Replace the original chromosome ID from in_gtf with chrom (seq.id)
 		l[0] = chrom
+  # Handling of single-line comments
+	if len(in_gff_lines) == 1:
+		l = in_gff_lines[0]
+		## Check length
+		## l[3] is start position of fasta in in.gtf and l[4] is end position
+		seq_id = l[0]
+		if int(l[4]) - int(l[3]) + 1 != sequence_length:
+			print(f"** WARNING: Inconsistent length for {seq_id}. Correcting start position to 1 and end position to {sequence_length}.")
+		## Correct start(l[3]) to 1 and end(l[4]) to length of insert fasta
 		new_gff_line = modify_gff_line(
-			l, start = int(l[3]) + position, end = int(l[4]) + position)
+			l, start=1 + position, end=sequence_length + position)
 		gff_out.write(new_gff_line)
-	
+	# Handling of multiple-line comments
+	else:
+		### Step1: extract all start and end into corresponding set()
+		start_positions = set()
+		end_positions = set()
+		for l in in_gff_lines:
+			start_positions.add(int(l[3]))
+			end_positions.add(int(l[4]))
+		### Step2: Find min start and max end
+		min_start = min(start_positions)
+		max_end = max(end_positions)
+		### Step3: Check sequence length, validness of min_start and max_end
+		if max_end - min_start + 1 != sequence_length:
+			raise ValueError(f"Error: Annotation length does not match sequence length. "
+							f"Expected {sequence_length}, but got {max_end - min_start + 1}")
+		if min_start < 1:
+			raise ValueError(f"Error: Invalid min_start value: {min_start}. It must be a positive integer.")
+		if min_start > max_end:
+			raise ValueError(f"Error: min_start ({min_start}) cannot be greater than max_end ({max_end}).")
+		### Step4: Adjust start and end. Offset will be 0 if no adjust need
+		offset = min_start - 1
+		for l in in_gff_lines:
+			### Step5: Correct start(l[3]) and end(l[4]) by minus offset
+			new_gff_line = modify_gff_line(
+				l, start = int(l[3]) - offset + position, end = int(l[4]) - offset + position)
+			gff_out.write(new_gff_line)		
+
 	## If insertion caused any existing features to be split, add
 	## the split features now immediately after adding the new features
 	for sf in split_features:
@@ -290,8 +324,8 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		gff_ext = new_gff_name.split('.')[-1]
 		ref_gff_path = ref_gff
 		if ref_gff.endswith('.gz'):
-			with gzip.open(ref_gff, 'rt') as f:
-				# Create a tempfile to store uncompressde content
+			with pgzip.open(ref_gff, 'rt') as f:
+						# Create a tempfile to store uncompressde content
 				with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 					tmp_f.write(f.read())
 					ref_gff_path = tmp_f.name
@@ -324,7 +358,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						and gff_chrom_id != last_seen_chrom_id 
 						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
-							gff_out, in_gff_lines, position, split_features, chrom_id)
+							gff_out, in_gff_lines, position, split_features, new_seq_length)
 					
 					last_seen_chrom_id = gff_chrom_id
 					
@@ -407,7 +441,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						if not in_gff_lines_appended:
 							in_gff_lines_appended = write_in_gff_lines(
-								gff_out, in_gff_lines, position, split_features, chrom_id)
+								gff_out, in_gff_lines, position, split_features, new_seq_length)
 							
 						# Change start position of feature to after cutoff point if
 						# the feature starts within the deletion
@@ -454,7 +488,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				and last_seen_chrom_id == chrom_id
 				and not in_gff_lines_appended):
 				in_gff_lines_appended = write_in_gff_lines(
-					gff_out, in_gff_lines, position, split_features, chrom_id)
+					gff_out, in_gff_lines, position, split_features, new_seq_length)
 			
 			# Checking to ensure in_gff_lines written
 			if not in_gff_lines_appended:
@@ -551,14 +585,4 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
-	# Temp code for step 1 and test, will be remove later
-	# args, iterations = get_input_args()
-	# print("iterations:", iterations)
-	# print("Chromosome:", args.chrom)
-	# print("Input FASTA files:", args.in_fasta)
-	# print("Input GFF files:", args.in_gff)
-	# print("Reference FASTA file:", args.ref_fasta)
-	# print("Reference GFF file:", args.ref_gff)
-	# print("Upstream FASTA files:", args.upstream_fasta)
-	# print("Downstream FASTA files:", args.downstream_fasta)
-	# print("Position:", list(map(int, args.position.split(','))))
+	
