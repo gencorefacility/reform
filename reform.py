@@ -2,11 +2,17 @@
 import argparse
 import re
 import os
-import pgzip
 import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+try:
+    import pgzip as gzip_module
+    print("Using pgzip for gzip operations.")
+except ImportError:
+    import gzip as gzip_module
+    print("pgzip not found, falling back to gzip.")
+
 
 def main():
 	## Retrieve command line arguments and number of iterations
@@ -119,8 +125,8 @@ def index_fasta(fasta_path):
 		# Create a tempfile to store uncompressde content
 		with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 			tmp_f_path = tmp_f.name
-			# Use pgzip to decompress parallely. Set thread=None means use all cores
-			with pgzip.open(fasta_path, 'rt', thread=None) as f:
+			# Use pgzip or gzip to decompress parallely. Set thread=None means use all cores
+			with gzip_module.open(fasta_path, 'rt', thread=None) as f:
 				tmp_f.write(f.read())
 		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
         	# remove temp file
@@ -321,7 +327,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		gff_ext = new_gff_name.split('.')[-1]
 		ref_gff_path = ref_gff
 		if ref_gff.endswith('.gz'):
-			with pgzip.open(ref_gff, 'rt') as f:
+			with gzip_module.open(ref_gff, 'rt') as f:
 						# Create a tempfile to store uncompressde content
 				with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 					tmp_f.write(f.read())
