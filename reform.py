@@ -22,8 +22,14 @@ def main():
 	## Sequential processing
 	for index in range(iterations):
 		## Read the new fasta (to be inserted into the ref genome)
-		record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
-		
+		try:
+			record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
+		except IndexError:
+			filename = in_arg.in_fasta[index].name
+			raise ValueError(f"Error: {filename} is not a valid FASTA file.")
+		except Exception as e:
+			raise ValueError(f"Error parsing FASTA file: {str(e)}")
+
 		## Generate index of sequences from ref reference fasta
 		if prev_fasta_path:
 			chrom_seqs = index_fasta(prev_fasta_path)
