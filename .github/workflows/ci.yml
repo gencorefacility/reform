@@ -1,10 +1,11 @@
 name: CI
 
-# Events: push to main branch
+# Events: push to main branch, pull request
 on:
   push:
     branches:
       - master
+  pull_request:
   workflow_dispatch:
 
 jobs:
