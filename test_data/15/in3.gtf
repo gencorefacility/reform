@@ -1,1 +1,1 @@
-X	new	exon	1	10	.	+	0	gene_id "third"; transcript_id "new.3";
+X	new	exon	1	10	.	+	0	gene_id "new"; transcript_id "new.1";
