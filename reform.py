@@ -255,7 +255,10 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence
 	sequence_length: length of the inserted sequence, used to determine 
 		the new end positions in the GFF file.
 	'''
-	# Handling of single-line comments
+  for l in in_gff_lines:
+		# Replace the original chromosome ID from in_gtf with chrom (seq.id)
+		l[0] = chrom
+  # Handling of single-line comments
 	if len(in_gff_lines) == 1:
 		l = in_gff_lines[0]
 		## Check length
@@ -317,7 +320,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		columns (in gff format) associated with each new feature to insert
 	position: start position of removal of existing sequence
 	down_position: end position of removal of existing sequence
-	chrom_id: the ID of the chromosome to modify
+	chrom_id: the ID of the chromosome to modify, which is seq.id
 	new_seq_length: the length of the new sequence being added to the chromosome
 	'''
 	with open(new_gff_name, "w") as gff_out:
