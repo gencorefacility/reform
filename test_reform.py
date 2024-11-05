@@ -643,6 +643,46 @@ class TestReform(unittest.TestCase):
 		print("Done")
 		
 		os.chdir(wd)
+	
+	def test_case_16(self):
+		"""
+		Case 16:
+		Testing Reform which invalid chrom
+		"""
+
+		wd = os.getcwd()
+		os.chdir('test_data/16/')
+
+		command = """
+		python3 ../../reform.py \
+		--chrom="X" \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		--position=-1
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing gtf")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+
+		os.chdir(wd)
 
 if __name__ == '__main__':
     unittest.main()
