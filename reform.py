@@ -252,7 +252,7 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 		exit()
 	return {'position': position, 'down_position': down_position}
 
-def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence_length):
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence_length, chrom):
 	'''
 	in_gff_lines: a list of lists where each nested list is a list of 
 		columns (in gff format) associated with each new feature to insert
@@ -261,6 +261,9 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence
 	sequence_length: length of the inserted sequence, used to determine 
 		the new end positions in the GFF file.
 	'''
+ 	# Replace the chromosome ID from in_gff with the correct chromosome ID
+	for l in in_gff_lines:
+		l[0] = chrom
 	# Handling of single-line comments
 	if len(in_gff_lines) == 1:
 		l = in_gff_lines[0]
@@ -367,7 +370,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						and gff_chrom_id != last_seen_chrom_id 
 						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
-							gff_out, in_gff_lines, position, split_features, new_seq_length)
+							gff_out, in_gff_lines, position, split_features, new_seq_length, chrom_id)
 					
 					last_seen_chrom_id = gff_chrom_id
 					
@@ -450,7 +453,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						if not in_gff_lines_appended:
 							in_gff_lines_appended = write_in_gff_lines(
-								gff_out, in_gff_lines, position, split_features, new_seq_length)
+								gff_out, in_gff_lines, position, split_features, new_seq_length, chrom_id)
 							
 						# Change start position of feature to after cutoff point if
 						# the feature starts within the deletion
@@ -497,7 +500,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				and last_seen_chrom_id == chrom_id
 				and not in_gff_lines_appended):
 				in_gff_lines_appended = write_in_gff_lines(
-					gff_out, in_gff_lines, position, split_features, new_seq_length)
+					gff_out, in_gff_lines, position, split_features, new_seq_length, chrom_id)
 			
 			# Checking to ensure in_gff_lines written
 			if not in_gff_lines_appended:
