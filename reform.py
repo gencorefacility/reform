@@ -128,14 +128,14 @@ def index_fasta(fasta_path):
 	the temporary file. Finally, the indexing result is returned.
 	'''
 	if fasta_path.endswith('.gz'):
-		# Create a tempfile to store uncompressde content
+		## Create a tempfile to store uncompressde content
 		with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 			tmp_f_path = tmp_f.name
-			# Use pgzip or gzip to decompress parallely. Set thread=None means use all cores
+			## Use pgzip or gzip to decompress parallely. Set thread=None means use all cores
 			with gzip_module.open(fasta_path, 'rt', thread=None) as f:
 				tmp_f.write(f.read())
 		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
-        	# remove temp file
+        ## remove temp file
 		os.remove(tmp_f_path)
 	else:
 		chrom_seqs = SeqIO.index(fasta_path, 'fasta')
@@ -232,7 +232,6 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 			# Ensure the upstream and downstream target sequences exists once in the selected chromosome, else die
 			upstream_seq_count = seq_str.count(upstream_seq)
 			downstream_seq_count = seq_str.count(downstream_seq)
-			### TODO: Update postion based on previous modifications
 			if upstream_seq_count == 1 and downstream_seq_count == 1:
 				## Obtain the starting position of the left_strand
 				new_index = seq_str.find(upstream_seq)
@@ -252,7 +251,7 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 		exit()
 	return {'position': position, 'down_position': down_position}
 
-def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence_length):
+def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence_length, chrom):
 	'''
 	in_gff_lines: a list of lists where each nested list is a list of 
 		columns (in gff format) associated with each new feature to insert
@@ -261,6 +260,9 @@ def write_in_gff_lines(gff_out, in_gff_lines, position, split_features, sequence
 	sequence_length: length of the inserted sequence, used to determine 
 		the new end positions in the GFF file.
 	'''
+ 	## Replace the chromosome ID from in_gff with the correct chromosome ID
+	for l in in_gff_lines:
+		l[0] = chrom
 	# Handling of single-line comments
 	if len(in_gff_lines) == 1:
 		l = in_gff_lines[0]
@@ -334,7 +336,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 		ref_gff_path = ref_gff
 		if ref_gff.endswith('.gz'):
 			with gzip_module.open(ref_gff, 'rt') as f:
-						# Create a tempfile to store uncompressde content
+				## Create a tempfile to store uncompressde content
 				with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 					tmp_f.write(f.read())
 					ref_gff_path = tmp_f.name
@@ -367,7 +369,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 						and gff_chrom_id != last_seen_chrom_id 
 						and not in_gff_lines_appended):
 						in_gff_lines_appended = write_in_gff_lines(
-							gff_out, in_gff_lines, position, split_features, new_seq_length)
+							gff_out, in_gff_lines, position, split_features, new_seq_length, chrom_id)
 					
 					last_seen_chrom_id = gff_chrom_id
 					
@@ -450,7 +452,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					else:
 						if not in_gff_lines_appended:
 							in_gff_lines_appended = write_in_gff_lines(
-								gff_out, in_gff_lines, position, split_features, new_seq_length)
+								gff_out, in_gff_lines, position, split_features, new_seq_length, chrom_id)
 							
 						# Change start position of feature to after cutoff point if
 						# the feature starts within the deletion
@@ -497,7 +499,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 				and last_seen_chrom_id == chrom_id
 				and not in_gff_lines_appended):
 				in_gff_lines_appended = write_in_gff_lines(
-					gff_out, in_gff_lines, position, split_features, new_seq_length)
+					gff_out, in_gff_lines, position, split_features, new_seq_length, chrom_id)
 			
 			# Checking to ensure in_gff_lines written
 			if not in_gff_lines_appended:
