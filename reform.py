@@ -27,7 +27,11 @@ def main():
 
 	## Sequential processing
 	for index in range(iterations):
-		## Read the new fasta (to be inserted into the ref genome)
+		# Start interation
+		print("-------------------------------------------")
+		print(f"Begin modification from in{index+1}.fa")
+		print("-------------------------------------------")
+  		## Read the new fasta (to be inserted into the ref genome)
 		try:
 			record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
 		except IndexError:
@@ -91,16 +95,17 @@ def main():
 					SeqIO.write([new_record], f, "fasta")
 				else:
 					SeqIO.write([chrom_seqs[s]], f, "fasta")
-		print("New fasta file created: ", new_fasta)
-		
-		print("Preparing to create new annotation file")
+		if (index == iterations-1):
+			print("------------------------------------------")
+			print("Reform Complete")
+			print("------------------------------------------")
+			print("New fasta file created: ", new_fasta)
 		
 		## Read in new GFF features from in_gff
 		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
 		
 		## Create a temp file for gff, if index is not equal to last iteration
 		annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
-		print(in_arg.ref_gff)
 		if index < iterations - 1:
 			temp_gff = tempfile.NamedTemporaryFile(delete=False, mode='w', suffix=annotation_ext)
 			temp_gff_name = temp_gff.name
@@ -117,7 +122,9 @@ def main():
 			else:
 				new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 		prev_gff_path = new_gff_path
-		print("New {} file created: {} ".format(annotation_ext.upper(), prev_gff_path))
+		if (index == iterations-1):
+			print(f"New fasta file created: {new_gff_path}")
+			print(f"Original Annotation: {in_arg.ref_gff}")
 
 
 def index_fasta(fasta_path):
@@ -394,6 +401,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					# and ends after down_position
 					elif gff_feat_start <= position and gff_feat_end > down_position:
 						print("Feature split")
+						print(line)
 						# Which side of the feature depends on the strand (we add this as a comment)
 						(x, y) = ("5", "3") if gff_feat_strand == "+" else ("3", "5")
 						
