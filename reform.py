@@ -8,10 +8,10 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 try:
     import pgzip as gzip_module
-    print("Using pgzip for gzip operations.")
+    print("\nUsing pgzip for gzip operations.\n")
 except ImportError:
     import gzip as gzip_module
-    print("pgzip not found, falling back to gzip.")
+    print("\npgzip not found, falling back to gzip.\n")
 
 
 def main():
@@ -33,14 +33,26 @@ def main():
 		print("-------------------------------------------")
   		## Read the new fasta (to be inserted into the ref genome)
 		try:
+			filename_fa = in_arg.in_fasta[index]
+			if not os.path.exists(filename_fa):
+				raise FileNotFoundError(f"Error: File {filename_fa} does not exist.")
+			real_path_fa = os.path.realpath(filename_fa)
 			record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
 		except IndexError:
-			filename = in_arg.in_fasta[index].name
-			raise ValueError(f"Error: {filename} is not a valid FASTA file.")
+			raise ValueError(f"Error: {filename_fa} is not a valid FASTA file.")
 		except Exception as e:
 			raise ValueError(f"Error parsing FASTA file: {str(e)}")
+		print("Preparing to create new FASTA file")
+		print(f"Original FASTA: {real_path_fa}")
+		filename_gff = in_arg.in_gff[index]
+		if not os.path.exists(filename_gff):
+			raise FileNotFoundError(f"Error: File {filename_gff} does not exist.")
+		real_path_gff = os.path.realpath(filename_gff)
+		print("Preparing to create new annotation file")
+		print(f"Original Annotation: {real_path_gff}")
+		print() ### print new line
 
-		## Generate index of sequences from ref reference fasta
+  		## Generate index of sequences from ref reference fasta
 		if prev_fasta_path:
 			chrom_seqs = index_fasta(prev_fasta_path)
 			os.remove(prev_fasta_path)
@@ -95,11 +107,6 @@ def main():
 					SeqIO.write([new_record], f, "fasta")
 				else:
 					SeqIO.write([chrom_seqs[s]], f, "fasta")
-		if (index == iterations-1):
-			print("------------------------------------------")
-			print("Reform Complete")
-			print("------------------------------------------")
-			print("New fasta file created: ", new_fasta)
 		
 		## Read in new GFF features from in_gff
 		in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
@@ -123,8 +130,11 @@ def main():
 				new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 		prev_gff_path = new_gff_path
 		if (index == iterations-1):
-			print(f"New fasta file created: {new_gff_path}")
-			print(f"Original Annotation: {in_arg.ref_gff}")
+			print("------------------------------------------")
+			print("Reform Complete")
+			print("------------------------------------------")
+			print(f"New .fa file created:  {os.path.realpath(new_fasta)}")
+			print(f"New {annotation_ext} file created: {os.path.realpath(new_gff_path)}")
 
 
 def index_fasta(fasta_path):
