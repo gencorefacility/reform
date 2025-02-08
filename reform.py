@@ -32,12 +32,12 @@ def main():
 		print(f"Begin modification from in{index+1}.fa")
 		print("-------------------------------------------")
 		if hasattr(in_arg, 'chrom') and in_arg.chrom is not None:
-			# Modify existing chrom seq
-			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path \
-				=  modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, \
-					iterations, prev_gff_path)
+			## Modify existing chrom seq
+			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
+				modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, \
+				iterations, prev_gff_path)
 		else:
-			# Add new chrom
+			## Add new chrom
 			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
 				add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 
@@ -118,7 +118,9 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 			new_gff_path = create_new_gff(new_gff_name, prev_gff_path, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 		else:
 			new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+	
 	prev_gff_path = new_gff_path
+	
 	return new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path
 
 def add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations):
@@ -245,7 +247,6 @@ def get_ref_basename(filepath):
 		base = base[:-3]  # remove .gz
 	name, ext = os.path.splitext(base)
 	return name, ext
-
 
 def modify_gff_line(elements, start=None, end=None, comment=None):
 	'''
@@ -639,28 +640,6 @@ def create_new_gff_for_existing_gff(new_gff_name, ref_gff, in_gff_lines, chrom_i
 		except Exception as e:
 			print(f"Warning: Failed to delete temp file {ref_gff_path}: {e}")
 	
-	# with open(new_gff_name, "w") as gff_out:
-	# 	ref_gff_path = ref_gff
-	# 	if ref_gff.endswith('.gz'):
-	# 		with gzip_module.open(ref_gff, 'rt') as f:
-	# 			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
-	# 				for line in f:
-	# 					tmp_f.write(line)
-	# 				tmp_f.flush()
-	# 				ref_gff_path = tmp_f.name
-	# 	## Copy all existing annotations to new GFF file
-	# 	with open(ref_gff_path, "r") as f:
-	# 		for line in f:
-	# 			gff_out.write(line)	
-	# 	# Append new annotations
-	# 	print(f"Appending new annotations to chromosome {chrom_id}.")
-	# 	for new_annotation in in_gff_lines:
-	# 		if new_annotation:
-	# 			gff_out.write("\t".join(new_annotation) + "\n")
-
-	# # Cleanup temp file if needed
-	# if ref_gff.endswith('.gz'):
-	# 	os.remove(ref_gff_path)
 	return new_gff_name
 
 def format_comment(comment, ext):
