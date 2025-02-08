@@ -31,11 +31,15 @@ def main():
 		print("-------------------------------------------")
 		print(f"Begin modification from in{index+1}.fa")
 		print("-------------------------------------------")
-		if hasattr(in_arg, 'chrom'):
+		if hasattr(in_arg, 'chrom') and in_arg.chrom is not None:
 			# Modify existing chrom seq
 			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path \
 				=  modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, \
 					iterations, prev_gff_path)
+		else:
+			# Add new chrom
+			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
+				add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 
 	print("------------------------------------------")
 	print("Reform Complete")
@@ -44,7 +48,11 @@ def main():
 	print(f"New {annotation_ext} file created: {os.path.realpath(new_gff_path)}")
 
 def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, iterations, prev_gff_path):
-	## Read FASTA
+	"""
+	Modifies a specified and existing chromosome sequence by inserting/replacing a new sequence at a given 
+ 	position and updates the corresponding FASTA and GFF files.
+ 	"""
+ 	## Read FASTA
 	record, chrom_seqs= read_fasta(in_arg, index, prev_fasta_path)
 	## Read annotation (gff/gtf)
 	read_gff(in_arg, index)
@@ -111,9 +119,69 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 		else:
 			new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
 	prev_gff_path = new_gff_path
-	return new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path, 
+	return new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path
+
+def add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations):
+    ## Read FASTA
+	record, chrom_seqs= read_fasta(in_arg, index, prev_fasta_path)
+	## Read annotation (gff/gtf)
+	read_gff(in_arg, index)
+	## Check if new chromosome existed in sequence
+	if in_arg.new_chrom in chrom_seqs:
+		raise ValueError(f"Chromosome {in_arg.new_chrom} already exists in the FASTA file.")
+	
+ 	## Build the new chromosome sequence by append new sequence below
+	## If the chromosome sequence length is in the header, replace it with new length
+	new_seq = str(record.seq)
+	new_length = str(len(new_seq))
+	new_length = str(len(new_seq))
+	new_record = SeqRecord(
+		Seq(new_seq), 
+		id=in_arg.new_chrom, # Use new_chrom
+		description=f"{in_arg.new_chrom}"
+	)
+	## Create new fasta file with modified chromosome 
+	if index < iterations - 1:
+		new_fasta_file = tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.fa')
+		new_fasta_file.close()
+		new_fasta = new_fasta_file.name
+		prev_fasta_path = new_fasta
+	else:
+		ref_basename, _ = get_ref_basename(in_arg.ref_fasta)
+		ref_name = ref_basename
+		new_fasta = ref_name + '_reformed.fa'
+	## Write all the original chromosomes first, then new chromosomes.
+	with open(new_fasta, "w") as f:
+		for s in chrom_seqs:
+			SeqIO.write([chrom_seqs[s]], f, "fasta")
+		SeqIO.write([new_record], f, "fasta")
+	## Read in new GFF features from in_gff
+	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
+	## Create a temp file for gff, if index is not equal to last iteration
+	annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
+	if index < iterations - 1:
+		temp_gff = tempfile.NamedTemporaryFile(delete=False, mode='w', suffix=annotation_ext)
+		temp_gff_name = temp_gff.name
+		temp_gff.close()
+		if prev_gff_path:
+			new_gff_path = create_new_gff_for_existing_gff(temp_gff_name, prev_gff_path, in_gff_lines, in_arg.new_chrom)
+			os.remove(prev_gff_path)
+		else:
+			new_gff_path = create_new_gff_for_existing_gff(temp_gff_name, in_arg.ref_gff, in_gff_lines, in_arg.new_chrom)
+	else:
+		new_gff_name = annotation_name + '_reformed' + annotation_ext
+		if prev_gff_path: 
+			new_gff_path = create_new_gff_for_existing_gff(new_gff_name, prev_gff_path, in_gff_lines, in_arg.new_chrom)
+		else:
+			new_gff_path = create_new_gff_for_existing_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, in_arg.new_chrom)
+	prev_gff_path = new_gff_path
+	return new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path
 
 def read_fasta(in_arg, index, prev_fasta_path):
+	"""
+	Reads the FASTA file, extracts the sequence to be inserted,
+	and indexes the reference genome chromosome sequences.
+	"""
 	## Read the new fasta (to be inserted into the ref genome)
 	try:
 		filename_fa = in_arg.in_fasta[index]
@@ -136,6 +204,9 @@ def read_fasta(in_arg, index, prev_fasta_path):
 	return record, chrom_seqs
 		
 def read_gff(in_arg, index):
+	"""
+	Reads the GFF file, verifies its existence, and prints its file path information.
+ 	"""
 	filename_gff = in_arg.in_gff[index]
 	if not os.path.exists(filename_gff):
 		raise FileNotFoundError(f"Error: File {filename_gff} does not exist.")
@@ -535,6 +606,63 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 			os.remove(ref_gff_path)
 	return new_gff_name
 
+def create_new_gff_for_existing_gff(new_gff_name, ref_gff, in_gff_lines, chrom_id):
+	"""
+	Appends new annotations to an existing GFF file without modifying existing features.
+	"""
+	ref_gff_path = ref_gff
+	## Handle compressed .gz GFF files
+	if ref_gff.endswith('.gz'):
+		with gzip_module.open(ref_gff, 'rt') as f:
+			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+				for line in f:
+					tmp_f.write(line)
+				tmp_f.flush()
+				ref_gff_path = tmp_f.name
+    ## Open new GFF file for writing
+	with open(new_gff_name, "w") as gff_out:
+        ## Copy all existing annotations to new GFF file
+		with open(ref_gff_path, "r", encoding="utf-8") as f:
+			for line in f:
+				gff_out.write(line)
+		## Append new annotations if present
+		if in_gff_lines:
+			print(f"Appending {len(in_gff_lines)} new annotations to chromosome {chrom_id}.")
+			for new_annotation in in_gff_lines:
+				if new_annotation:
+					gff_out.write("\t".join(new_annotation))
+	
+ 	## Cleanup temp file if needed
+	if ref_gff.endswith('.gz') and ref_gff_path != ref_gff:
+		try:
+			os.remove(ref_gff_path)
+		except Exception as e:
+			print(f"Warning: Failed to delete temp file {ref_gff_path}: {e}")
+	
+	# with open(new_gff_name, "w") as gff_out:
+	# 	ref_gff_path = ref_gff
+	# 	if ref_gff.endswith('.gz'):
+	# 		with gzip_module.open(ref_gff, 'rt') as f:
+	# 			with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
+	# 				for line in f:
+	# 					tmp_f.write(line)
+	# 				tmp_f.flush()
+	# 				ref_gff_path = tmp_f.name
+	# 	## Copy all existing annotations to new GFF file
+	# 	with open(ref_gff_path, "r") as f:
+	# 		for line in f:
+	# 			gff_out.write(line)	
+	# 	# Append new annotations
+	# 	print(f"Appending new annotations to chromosome {chrom_id}.")
+	# 	for new_annotation in in_gff_lines:
+	# 		if new_annotation:
+	# 			gff_out.write("\t".join(new_annotation) + "\n")
+
+	# # Cleanup temp file if needed
+	# if ref_gff.endswith('.gz'):
+	# 	os.remove(ref_gff_path)
+	return new_gff_name
+
 def format_comment(comment, ext):
 	'''
 	Format comment according to ext (GFF or GTF) and return
@@ -592,36 +720,41 @@ def get_input_args():
 	in_args = parser.parse_args()
 	in_args.in_fasta = in_args.in_fasta.split(',')
 	in_args.in_gff = in_args.in_gff.split(',')
-	if in_args.upstream_fasta:
-		in_args.upstream_fasta = in_args.upstream_fasta.split(',')
-	if in_args.downstream_fasta:
-		in_args.downstream_fasta = in_args.downstream_fasta.split(',')
-
-	if in_args.position is None and (in_args.upstream_fasta is None or in_args.downstream_fasta is None):
-		print("** Error: You must provide either the position, or the upstream and downstream sequences.")
-		exit()
-	
-	if not in_args.position and len(in_args.upstream_fasta) != len(in_args.downstream_fasta):
-		print("** Error: The number of upstream_fasta and downstream_fasta files does not match.")
-		exit()
-
-	if in_args.position is not None:
-		try:
-			in_args.position = list(map(int, in_args.position.split(',')))
-			iterations = iterations = len(in_args.position)
-		except ValueError:
-			print("** Error: Position must be a comma-separated list of integers, like 1,5,-1.")
-			exit()
-	else:
-		iterations = len(in_args.upstream_fasta)
-
-	if (len(in_args.in_fasta) != len(in_args.in_gff)) or (len(in_args.in_fasta) != iterations):
+	if (len(in_args.in_fasta) != len(in_args.in_gff)):
 		print("** Error: The number of inserted FASTA files does not match the number of GTF files, or their counts and positions do not align.")
 		exit()
-		
-	if in_args.new_chrom and (in_args.position or in_args.upstream_fasta or in_args.downstream_fasta):
-		parser.error("** Error: When using --new_chrom, you cannot provide --position, --upstream_fasta, or --downstream_fasta.")
-		exit()
+	else:
+		iterations = len(in_args.in_fasta)
+	## Modify existing chrom
+	if in_args.chrom:
+		if in_args.upstream_fasta:
+			in_args.upstream_fasta = in_args.upstream_fasta.split(',')
+		if in_args.downstream_fasta:
+			in_args.downstream_fasta = in_args.downstream_fasta.split(',')
+		if in_args.position is None and (in_args.upstream_fasta is None or in_args.downstream_fasta is None):
+			print("** Error: You must provide either the position, or the upstream and downstream sequences.")
+			exit()
+		if in_args.position is not None:
+			try:
+				in_args.position = list(map(int, in_args.position.split(',')))
+			except ValueError:
+				print("** Error: Position must be a comma-separated list of integers, like 1,5,-1.")
+				exit()
+			if iterations != len(in_args.position):
+				print("** Error: Position must be a equal to number of input FASTA")
+				exit()
+		else:
+			if iterations != len(in_args.upstream_fasta):
+				print("** Error: Upstream FASTA must be a equal to number of input FASTA")
+				exit()
+		if not in_args.position and len(in_args.upstream_fasta) != len(in_args.downstream_fasta):
+			print("** Error: The number of upstream_fasta and downstream_fasta files does not match.")
+			exit()
+	## Add new chrom
+	else:
+		if in_args.position or in_args.upstream_fasta or in_args.downstream_fasta:
+			parser.error("** Error: When using --new_chrom, you cannot provide --position, --upstream_fasta, or --downstream_fasta.")
+			exit()
 	
 	return in_args, iterations
 	
