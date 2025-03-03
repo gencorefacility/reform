@@ -699,7 +699,46 @@ class TestReform(unittest.TestCase):
 		--in_fasta=in.fa \
 		--in_gff=in.gtf \
 		--ref_fasta=ref.fa \
-		--ref_gff=ref.gtf \
+		--ref_gff=ref.gtf
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing gtf")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+
+		os.chdir(wd)
+	
+	def test_case_18(self):
+		"""
+		Case 18:
+		Testing Reform which adding multiple new chroms
+		"""
+
+		wd = os.getcwd()
+		os.chdir('test_data/18/')
+
+		command = """
+		python3 ../../reform.py \
+		--new_chrom="Y,H,M" \
+		--in_fasta=in1.fa,in2.fa,in3.fa \
+		--in_gff=in1.gtf,in2.gtf,in3.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf
 		"""
 
 		response = subprocess.getoutput(command)

@@ -55,12 +55,13 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
  	## Read FASTA
 	record, chrom_seqs= read_fasta(in_arg, index, prev_fasta_path)
 	## Read annotation (gff/gtf)
-	read_gff(in_arg, index)
+	check_gff(in_arg, index)
 	## Obtain the sequence of the chromosome we want to modify
-	seq = chrom_seqs[in_arg.chrom]
-	seq_str = str(seq.seq)
+	existing_seq = chrom_seqs[in_arg.chrom]
+	existing_seq_str = str(existing_seq.seq)
+
 	## Get the position to insert the new sequence
-	positions = get_position(index, in_arg.position, in_arg.upstream_fasta, in_arg.downstream_fasta, in_arg.chrom, seq_str, prev_modifications)
+	positions = get_position(index, in_arg.position, in_arg.upstream_fasta, in_arg.downstream_fasta, in_arg.chrom, existing_seq_str, prev_modifications)
 	position = positions['position']
 	down_position = positions['down_position']
 	## Save current modification which include position(index) and length changed.
@@ -75,13 +76,13 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 		.format(record.description, in_arg.in_fasta[index], position, in_arg.chrom))
 	## Build the new chromosome sequence with the inserted_seq 
 	## If the chromosome sequence length is in the header, replace it with new length
-	new_seq = seq_str[:position] + str(record.seq) + seq_str[down_position:]
-	chrom_length = str(len(seq_str))
+	new_seq = existing_seq_str[:position] + str(record.seq) + existing_seq_str[down_position:]
+	chrom_length = str(len(existing_seq_str))
 	new_length = str(len(new_seq))
 	new_record = SeqRecord(
 		Seq(new_seq), 
-		id=seq.id, 
-		description=seq.description.replace(chrom_length, new_length)
+		id=existing_seq.id, 
+		description=existing_seq.description.replace(chrom_length, new_length)
 		)
 	## Create new fasta file with modified chromosome 
 	if index < iterations - 1:
@@ -95,7 +96,7 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 		new_fasta = ref_name + '_reformed.fa'
 	with open(new_fasta, "w") as f:
 		for s in chrom_seqs:
-			if s == seq.id:
+			if s == existing_seq.id:
 				SeqIO.write([new_record], f, "fasta")
 			else:
 				SeqIO.write([chrom_seqs[s]], f, "fasta")
@@ -108,16 +109,16 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 		temp_gff_name = temp_gff.name
 		temp_gff.close()
 		if prev_gff_path:
-			new_gff_path = create_new_gff(temp_gff_name, prev_gff_path, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+			new_gff_path = create_new_gff(temp_gff_name, prev_gff_path, in_gff_lines, position, down_position, existing_seq.id, len(str(record.seq)))
 			os.remove(prev_gff_path)
 		else:
-			new_gff_path = create_new_gff(temp_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+			new_gff_path = create_new_gff(temp_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, existing_seq.id, len(str(record.seq)))
 	else:
 		new_gff_name = annotation_name + '_reformed' + annotation_ext
 		if prev_gff_path: 
-			new_gff_path = create_new_gff(new_gff_name, prev_gff_path, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+			new_gff_path = create_new_gff(new_gff_name, prev_gff_path, in_gff_lines, position, down_position, existing_seq.id, len(str(record.seq)))
 		else:
-			new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, seq.id, len(str(record.seq)))
+			new_gff_path = create_new_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, position, down_position, existing_seq.id, len(str(record.seq)))
 	
 	prev_gff_path = new_gff_path
 	
@@ -127,20 +128,17 @@ def add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
     ## Read FASTA
 	record, chrom_seqs= read_fasta(in_arg, index, prev_fasta_path)
 	## Read annotation (gff/gtf)
-	read_gff(in_arg, index)
+	check_gff(in_arg, index)
 	## Check if new chromosome existed in sequence
-	if in_arg.new_chrom in chrom_seqs:
-		raise ValueError(f"Chromosome {in_arg.new_chrom} already exists in the FASTA file.")
-	
+	if in_arg.new_chrom[index] in chrom_seqs:
+		raise ValueError(f"Chromosome {in_arg.new_chrom[index]} already exists in the FASTA file.")
  	## Build the new chromosome sequence by append new sequence below
-	## If the chromosome sequence length is in the header, replace it with new length
+	## Using new_chrom as the id of the new chromosome
 	new_seq = str(record.seq)
-	new_length = str(len(new_seq))
-	new_length = str(len(new_seq))
 	new_record = SeqRecord(
 		Seq(new_seq), 
-		id=in_arg.new_chrom, # Use new_chrom
-		description=f"{in_arg.new_chrom}"
+		id=in_arg.new_chrom[index], # Use new_chrom
+		description=f"{in_arg.new_chrom[index]}"
 	)
 	## Create new fasta file with modified chromosome 
 	if index < iterations - 1:
@@ -166,16 +164,16 @@ def add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 		temp_gff_name = temp_gff.name
 		temp_gff.close()
 		if prev_gff_path:
-			new_gff_path = create_new_gff_for_existing_gff(temp_gff_name, prev_gff_path, in_gff_lines, in_arg.new_chrom)
+			new_gff_path = create_new_gff_for_existing_gff(temp_gff_name, prev_gff_path, in_gff_lines, in_arg.new_chrom[index])
 			os.remove(prev_gff_path)
 		else:
-			new_gff_path = create_new_gff_for_existing_gff(temp_gff_name, in_arg.ref_gff, in_gff_lines, in_arg.new_chrom)
+			new_gff_path = create_new_gff_for_existing_gff(temp_gff_name, in_arg.ref_gff, in_gff_lines, in_arg.new_chrom[index])
 	else:
 		new_gff_name = annotation_name + '_reformed' + annotation_ext
 		if prev_gff_path: 
-			new_gff_path = create_new_gff_for_existing_gff(new_gff_name, prev_gff_path, in_gff_lines, in_arg.new_chrom)
+			new_gff_path = create_new_gff_for_existing_gff(new_gff_name, prev_gff_path, in_gff_lines, in_arg.new_chrom[index])
 		else:
-			new_gff_path = create_new_gff_for_existing_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, in_arg.new_chrom)
+			new_gff_path = create_new_gff_for_existing_gff(new_gff_name, in_arg.ref_gff, in_gff_lines, in_arg.new_chrom[index])
 	prev_gff_path = new_gff_path
 	return new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path
 
@@ -205,7 +203,7 @@ def read_fasta(in_arg, index, prev_fasta_path):
 		chrom_seqs = index_fasta(in_arg.ref_fasta)
 	return record, chrom_seqs
 		
-def read_gff(in_arg, index):
+def check_gff(in_arg, index):
 	"""
 	Reads the GFF file, verifies its existence, and prints its file path information.
  	"""
@@ -680,7 +678,7 @@ def get_input_args():
 	chrom_group.add_argument('--chrom', type=str, 
                              help="Chromosome name (String)")
 	chrom_group.add_argument('--new_chrom', type=str, 
-                             help="New Chromosome name (String)")
+                             help="Comma-separated new chromosome name (String)")
 	parser.add_argument('--in_fasta', type=str, required=True,
                     help="Path(s) to new sequence(s) to be inserted into reference genome in fasta format") 
 	parser.add_argument('--in_gff', type=str, required=True,
@@ -734,6 +732,8 @@ def get_input_args():
 		if in_args.position or in_args.upstream_fasta or in_args.downstream_fasta:
 			parser.error("** Error: When using --new_chrom, you cannot provide --position, --upstream_fasta, or --downstream_fasta.")
 			exit()
+		## Convert new_chrom from string to list
+		in_args.new_chrom = in_args.new_chrom.split(',')
 	
 	return in_args, iterations
 	
