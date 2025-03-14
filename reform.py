@@ -101,7 +101,7 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 			else:
 				SeqIO.write([chrom_seqs[s]], f, "fasta")
 	## Read in new GFF features from in_gff
-	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
+	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index], False)
 	## Create a temp file for gff, if index is not equal to last iteration
 	annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
 	if index < iterations - 1:
@@ -156,7 +156,7 @@ def add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 			SeqIO.write([chrom_seqs[s]], f, "fasta")
 		SeqIO.write([new_record], f, "fasta")
 	## Read in new GFF features from in_gff
-	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
+	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index], True)
 	## Create a temp file for gff, if index is not equal to last iteration
 	annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
 	if index < iterations - 1:
@@ -269,7 +269,7 @@ def modify_gff_line(elements, start=None, end=None, comment=None):
 	## Return the modified line
 	return("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(elements[0], elements[1], elements[2], start, end, elements[5], elements[6], elements[7], comment))
 	
-def get_in_gff_lines(in_gff):
+def get_in_gff_lines(in_gff, is_add_new_chrom):
 	'''
 	Takes a gff file and returns a list of lists where 
 	each parent list item is a single line of the gff file
@@ -278,16 +278,38 @@ def get_in_gff_lines(in_gff):
 	with open(in_gff, "r") as f:
 		in_gff_lines = []
 		for line in f:
-			line_elements = line.split('\t')
-			# Skip comment lines
-			if line.startswith("#"):
+			# Skip empty lines
+			if not line.strip():
 				continue
-			# Ensure lines have 9 columns
-			if len(line_elements) != 9:
-				print("** ERROR: in_gff file does not have 9 columns, it has", len(line_elements))
-				print(line_elements)
-				exit()
-			in_gff_lines.append(line_elements)
+			
+			# Handle differently based on whether we're adding a new chromosome or modifying existing
+			if not is_add_new_chrom:
+   				# Skip comment lines when modifying existing chromosome
+				if line.startswith("#"):
+					continue
+				# Parse with tab delimiter for regular lines
+				line_elements = line.split('\t')
+				# Ensure lines have 9 columns when modifying existing chromosome
+				if len(line_elements) != 9:
+					print("** ERROR: in_gff file does not have 9 columns, it has", len(line_elements))
+					print(line_elements)
+					exit()
+				in_gff_lines.append(line_elements)
+			else:
+				# For adding new chromosomes, process all header and feature lines
+				if line.startswith("#"):
+					# Select appropriate delimiter based on content
+					if '\t' in line:
+						line_elements = line.split('\t')
+					else:
+						line_elements = line.split()
+					if line_elements[0] == "##sequence-region":
+						line_elements[-1] += '\n'
+						in_gff_lines.append(line_elements)
+				elif len(line.split('\t')) == 9:
+					# Normal feature line with 9 tab-delimited columns
+					in_gff_lines.append(line.split('\t'))
+		print(in_gff_lines) 
 	return in_gff_lines
 	
 def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_modifications):
@@ -436,15 +458,22 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					ref_gff_path = tmp_f.name
 		with open(ref_gff_path, "r") as f:
 			for line in f:
-				line_elements = line.split('\t')
+				# For header lines, handle both tab and space-delimited formats
 				if line.startswith("#"):
-					if line_elements[0] == "##sequence-region" and line_elements[1] == chrom_id:
+					if '\t' in line:
+						line_elements = line.split('\t')
+					else:
+						line_elements = line.split()
+					
+					if line.startswith("##sequence-region") and line_elements[1] == chrom_id:
 						## Edit the length of the chromosome 
 						original_length = int(line_elements[3])
 						new_length = original_length - (down_position - position) + new_seq_length
 						line = line.replace(str(original_length), str(new_length))
 					gff_out.write(line)
 				else:
+					# Regular feature lines are always tab-delimited
+					line_elements = line.split('\t')
 					gff_chrom_id = line_elements[0]
 					gff_feat_start = int(line_elements[3])
 					gff_feat_end = int(line_elements[4])
@@ -628,7 +657,9 @@ def create_new_gff_for_existing_gff(new_gff_name, ref_gff, in_gff_lines, chrom_i
 		if in_gff_lines:
 			print(f"Appending {len(in_gff_lines)} new annotations to chromosome {chrom_id}.")
 			for new_annotation in in_gff_lines:
-				if new_annotation:
+				if new_annotation[0] == "##sequence-region":
+					gff_out.write(" ".join(new_annotation))
+				elif new_annotation:
 					gff_out.write("\t".join(new_annotation))
 	
  	## Cleanup temp file if needed
@@ -739,4 +770,4 @@ def get_input_args():
 	
 if __name__ == "__main__":
 	main()
-	
+
