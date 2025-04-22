@@ -101,7 +101,7 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 			else:
 				SeqIO.write([chrom_seqs[s]], f, "fasta")
 	## Read in new GFF features from in_gff, False means modify existing chrom
-	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index])
+	in_gff_lines = get_in_gff_lines(in_gff=in_arg.in_gff[index], existing_chrom=in_arg.chrom, new_chrom=None)
 	## Create a temp file for gff, if index is not equal to last iteration
 	annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
 	if index < iterations - 1:
@@ -157,7 +157,7 @@ def add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 		SeqIO.write([new_record], f, "fasta")
 	## Read in new GFF features from in_gff
 	## Pass the new_chrom name from command line and the length of the new sequence to correct ##sequence-region line
-	in_gff_lines = get_in_gff_lines(in_arg.in_gff[index], in_arg.new_chrom[index], len(new_seq))
+	in_gff_lines = get_in_gff_lines(in_gff=in_arg.in_gff[index], new_chrom=in_arg.new_chrom[index], sequence_length=len(new_seq))
 	## Create a temp file for gff, if index is not equal to last iteration
 	annotation_name, annotation_ext = get_ref_basename(in_arg.ref_gff)
 	if index < iterations - 1:
@@ -190,6 +190,19 @@ def read_fasta(in_arg, index, prev_fasta_path):
 			raise FileNotFoundError(f"Error: File {filename_fa} does not exist.")
 		real_path_fa = os.path.realpath(filename_fa)
 		record = list(SeqIO.parse(in_arg.in_fasta[index], "fasta"))[0]
+		# Check for mismatch between FASTA record ID and command line chromosome name
+		if hasattr(in_arg, 'new_chrom') and in_arg.new_chrom is not None:
+			if record.id != in_arg.new_chrom[index]:
+				print(f"** WARNING: Mismatch detected between chromosome name in input FASTA ({record.id}) "
+                      f"and command line parameter ({in_arg.new_chrom[index]}).")
+				print(f"Using command line chromosome name: {in_arg.new_chrom[index]}")
+                # The actual override happens in add_new_chrom_seq where a new SeqRecord is created
+		elif hasattr(in_arg, 'chrom') and in_arg.chrom is not None:
+			if record.id != in_arg.chrom:
+				print(f"** WARNING: Mismatch detected between chromosome name in input FASTA ({record.id}) "
+					  f"and command line parameter ({in_arg.chrom}).")
+				print(f"Using command line chromosome name: {in_arg.chrom}")
+				# The actual override happens in modify_existing_chrom_seq where the existing sequence is modified
 	except IndexError:
 		raise ValueError(f"Error: {filename_fa} is not a valid FASTA file.")
 	except Exception as e:
@@ -289,7 +302,7 @@ def valid_gff_line(line_elements):
 			return False
 	return True
 
-def get_in_gff_lines(in_gff, new_chrom=None, sequence_length=None):
+def get_in_gff_lines(in_gff=None, existing_chrom=None, new_chrom=None, sequence_length=None):
 	'''
 	Takes a gff file and returns a list of lists where 
 	each parent list item is a single line of the gff file
@@ -303,7 +316,7 @@ def get_in_gff_lines(in_gff, new_chrom=None, sequence_length=None):
 				continue
 			
 			# Handle differently based on whether we're adding a new chromosome or modifying existing
-			if line.startswith("##sequence-region"):
+			if line.startswith("##sequence-region") and new_chrom is not None:
 				## Paste ##sequence-region line which only exists in gtf/gff for adding new chromosome.
 				## Select user used delimiter based on content
 				if '\t' in line:
@@ -336,6 +349,11 @@ def get_in_gff_lines(in_gff, new_chrom=None, sequence_length=None):
 			else:
 				## Split, check and add feature lines
 				line_elements = line.split('\t')
+				chorme_id = existing_chrom if existing_chrom else new_chrom
+				if line_elements[0] != chorme_id:
+					print("** Warning: The chromosome name in the GFF file does not match the new chromosome name.")
+					print(f"Correct the chromosome name {line_elements[0]} to {chorme_id}")
+					line_elements[0] = chorme_id
 				if not valid_gff_line(line_elements):
 					exit()
 			in_gff_lines.append(line_elements)
@@ -667,6 +685,7 @@ def create_new_gff_for_existing_gff(new_gff_name, ref_gff, in_gff_lines, chrom_i
 	"""
 	Appends new annotations to an existing GFF file without modifying existing features.
 	"""
+	gff_splitor = ''
 	ref_gff_path = ref_gff
 	## Handle compressed .gz GFF files
 	if ref_gff.endswith('.gz'):
@@ -681,6 +700,12 @@ def create_new_gff_for_existing_gff(new_gff_name, ref_gff, in_gff_lines, chrom_i
         ## Copy all existing annotations to new GFF file
 		with open(ref_gff_path, "r", encoding="utf-8") as f:
 			for line in f:
+				if line.startswith("##sequence-region") and gff_splitor == '':
+					## Select user used delimiter based on content
+					if '\t' in line:
+						gff_splitor = ('\t')
+					else:
+						gff_splitor = (' ')
 				gff_out.write(line)
 		## Append new annotations if present
 		if in_gff_lines:
@@ -688,8 +713,10 @@ def create_new_gff_for_existing_gff(new_gff_name, ref_gff, in_gff_lines, chrom_i
 			for new_annotation in in_gff_lines:
 				if new_annotation[0] == "##sequence-region":
 					## Use predefined format for sequence-region line
+					if gff_splitor == '':
+						gff_splitor = new_annotation[-1]
 					## Remove format indicater, and add new line
-					gff_out.write(new_annotation[-1].join(new_annotation[:-1])+'\n')
+					gff_out.write(gff_splitor.join(new_annotation[:-1])+'\n')
 				elif new_annotation:
 					gff_out.write("\t".join(new_annotation))
 	
