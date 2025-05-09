@@ -212,12 +212,7 @@ def read_fasta(in_arg, index, prev_fasta_path):
                       f"and command line parameter ({in_arg.new_chrom[index]}).")
 				print(f"Using command line chromosome name: {in_arg.new_chrom[index]}")
                 # The actual override happens in add_new_chrom_seq where a new SeqRecord is created
-		elif hasattr(in_arg, 'chrom') and in_arg.chrom is not None:
-			if record.id != in_arg.chrom:
-				print(f"** WARNING: Mismatch detected between chromosome name in input FASTA ({record.id}) "
-					  f"and command line parameter ({in_arg.chrom}).")
-				print(f"Using command line chromosome name: {in_arg.chrom}")
-				# The actual override happens in modify_existing_chrom_seq where the existing sequence is modified
+
 	except IndexError:
 		raise ValueError(f"Error: {filename_fa} is not a valid FASTA file.")
 	except Exception as e:
