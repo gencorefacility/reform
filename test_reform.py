@@ -991,6 +991,57 @@ class TestReform(unittest.TestCase):
 		print()
 
 		os.chdir(wd)
+  
+	def test_case_20(self):
+		"""
+		Case 20:
+		Simple addition using the position argument.
+		Test auto correction for wrong input fasta name,
+		wrong input gtf name and length
+		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
+		wd = os.getcwd()
+		os.chdir('test_data/20/')
+		
+		command = """
+		python3 ../../reform.py \
+		--new_chrom="Y" \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
+		os.chdir(wd)
 
 if __name__ == '__main__':
     unittest.main()
