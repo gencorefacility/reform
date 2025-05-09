@@ -6,17 +6,29 @@ import tempfile
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+
+## Importing gzip or pgzip module for file compression
+print("------------------------------------------")
+print(f"Compression Library Use:")
+print("------------------------------------------")
 try:
 	import pgzip as gzip_module
-	print(f"\nUsing pgzip for gzip operations.\n")
+	print(f"Using pgzip for gzip operations.")
 except ImportError:
 	import gzip as gzip_module
-	print(f"\npgzip not found, falling back to gzip.\n")
+	print(f"pgzip not found, falling back to gzip.")
 
 
 def main():
 	## Retrieve command line arguments and number of iterations
 	in_arg, iterations = get_input_args()
+	
+	## Print reference file paths at start of process
+	print("------------------------------------------")
+	print(f"Path of Reference Files:")
+	print("------------------------------------------")
+	print(f"Reference FASTA: {os.path.realpath(in_arg.ref_fasta)}")
+	print(f"Reference Annotation: {os.path.realpath(in_arg.ref_gff)}")
 
 	## List for previous postion and modification length
 	prev_modifications = []
@@ -28,16 +40,19 @@ def main():
 	## Sequential processing
 	for index in range(iterations):
 		# Start interation
-		print("-------------------------------------------")
-		print(f"Begin modification from in{index+1}.fa")
-		print("-------------------------------------------")
 		if hasattr(in_arg, 'chrom') and in_arg.chrom is not None:
 			## Modify existing chrom seq
+			print("-------------------------------------------")
+			print(f"Begin modification from in{index+1}.fa")
+			print("-------------------------------------------")
 			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
 				modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, \
 				iterations, prev_gff_path)
 		else:
-			## Add new chrom
+			## Add new chrom seq
+			print("-------------------------------------------")
+			print(f"Begin adding a new chromosome from in{index+1}.fa")
+			print("-------------------------------------------")
 			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
 				add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 
@@ -207,7 +222,7 @@ def read_fasta(in_arg, index, prev_fasta_path):
 	except Exception as e:
 		raise ValueError(f"Error parsing FASTA file: {str(e)}")
 	print(f"Preparing to create new FASTA file")
-	print(f"Original FASTA: {real_path_fa}")
+	print(f"Original Input FASTA: {real_path_fa}")
 	## Generate index of sequences from ref reference fasta
 	if prev_fasta_path:
 		chrom_seqs = index_fasta(prev_fasta_path)
@@ -225,7 +240,7 @@ def check_gff(in_arg, index):
 		raise FileNotFoundError(f"Error: File {filename_gff} does not exist.")
 	real_path_gff = os.path.realpath(filename_gff)
 	print("Preparing to create new annotation file")
-	print(f"Original Annotation: {real_path_gff}")
+	print(f"Original Input Annotation: {real_path_gff}")
 	print() ### print new line
 
 def index_fasta(fasta_path):
