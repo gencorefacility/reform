@@ -14,7 +14,7 @@ Learn more at https://gencore.bio.nyu.edu/reform/
 
 Install biopython if you don't already have it:
 
-`pip install biopython`
+`pip install biopython>=1.78`
 
 Reform supports reading and writing .gz files using gzip. To accelerate compression and decompression, it optionally supports pgzip, a parallel implementation of gzip. Users must install pgzip separately to enable this feature.
 
