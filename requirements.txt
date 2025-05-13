@@ -1,2 +1,2 @@
-biopython
+biopython>=1.78
 pgzip
