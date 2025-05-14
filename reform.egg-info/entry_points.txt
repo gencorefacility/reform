@@ -1,0 +1,2 @@
+[console_scripts]
+reform = reform:main
