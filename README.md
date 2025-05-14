@@ -12,8 +12,7 @@ Learn more at https://gencore.bio.nyu.edu/reform/
 
 Install pgzip and biopython if you don't already have it:
 
-`pip install pgzip`   
-`pip install biopython`
+`pip install pgzip biopython>=1.78`
 
 Invoke the python script:
 
