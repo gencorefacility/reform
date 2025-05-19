@@ -24,9 +24,9 @@ Install pgzip if you don't already have it:
 
 Invoke the python script:
 
-```bash
+```
 ### Edit a sequence within position
-python3 reform.py 
+python3 reform.py \
   --chrom=<chrom> \
   --position=<pos1>,<pos2>,<pos2> \ 
   --in_fasta=<in_fasta1>,<in_fasta2>,<in_fasta3> \
@@ -35,11 +35,11 @@ python3 reform.py
   --ref_gff=<ref_gff>
 ```
 
-```bash
+```
 ### Edit a sequence within upstream & downstream
-python3 reform.py 
+python3 reform.py \
   --chrom=<chrom> \
-  --upstream_fasta=<upstream1>, <upstream2>, <upstream3> \
+  --upstream_fasta=<upstream1>,<upstream2>,<upstream3> \
   --downstream_fasta=<downstream1>,<downstream2>,<downstream3> \
   --in_fasta=<in_fasta1>,<in_fasta2>,<in_fasta3> \
   --in_gff=<in_gff1>,<in_gff2>,<in_gff3> \
@@ -47,9 +47,9 @@ python3 reform.py
   --ref_gff=<ref_gff>
 ```
 
-```bash
+```
 ### Append a novel chromosome sequence
-python3 reform.py 
+python3 reform.py \
   --new_chrom=<chrom> \
   --in_fasta=<in_fasta1>,<in_fasta2>,<in_fasta3> \
   --in_gff=<in_gff1>,<in_gff2>,<in_gff3> \
@@ -80,7 +80,7 @@ python3 reform.py
 ## Example
 
 ```
-python3 reform.py 
+python3 reform.py \
   --chrom="I" \
   --upstream_fasta="data/up1.fa,data/up2.fa,data/up3.fa" \
   --downstream_fasta="data/down1.fa,data/down2.fa,data/down3.fa" \
