@@ -5,7 +5,7 @@ setup(
     version='1.1.0',
     py_modules=['reform'],
     install_requires=[
-        'biopython',
+        'biopython>=1.78',
         'pgzip',
     ],
     entry_points={
