@@ -514,7 +514,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					if line.startswith("##sequence-region") and line_elements[1] == chrom_id:
 						## Edit the length of the chromosome 
 						original_length = int(line_elements[3])
-						new_length = original_length - (down_position - position) + new_seq_length
+						new_length = calculate_new_length(original_length, position, down_position, new_seq_length)
 						line = line.replace(str(original_length), str(new_length))
 					gff_out.write(line)
 				else:
@@ -555,7 +555,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					# "chromosome" or "region")
 					elif gff_feat_type in ['chromosome', 'region']:
 						original_length = gff_feat_end
-						new_length = original_length - (down_position - position) + new_seq_length
+						new_length = calculate_new_length(original_length, position, down_position, new_seq_length)
 						line = line.replace(str(original_length), str(new_length))
 						gff_out.write(line)
 						
@@ -757,7 +757,14 @@ def rename_id(line):
 	else:
 		print(f"This feature will not be renamed because it does not have an ID/gene_id attribute:\n{line}")
 		return attributes
-		
+
+def calculate_new_length(original_length, position, down_position, new_seq_length):
+	"""
+	Calculate the new chromosome/region length after a modification.
+	Returns: The new calculated length
+	"""
+	return original_length - (down_position - position) + new_seq_length
+	
 def get_input_args():
 	parser = argparse.ArgumentParser()
 	chrom_group = parser.add_mutually_exclusive_group(required=True)
