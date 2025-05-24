@@ -1,0 +1,5 @@
+##sequence-region F.11 3 27
+H	ref	exon	1	16	.	+	0	gene_id "gene2"; transcript_id "gene2.1";
+H	ref	CDS	4	14	.	+	0	gene_id "gene2"; transcript_id "gene2.1";
+H	ref	start_codon	1	3	.	+	0	gene_id "gene2"; transcript_id "gene2.1";
+H	ref	stop_codon	14	16	.	+	0	gene_id "gene2"; transcript_id "gene2.1";
