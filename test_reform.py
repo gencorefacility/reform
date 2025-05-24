@@ -19,12 +19,17 @@ class TestReform(unittest.TestCase):
 		os.system(cleanup_command)
 		print("Done")
 	
-	def test_case_1(self):
+	def test_case_01(self):
 		"""
 		Case 1:
 		Indel within a feature resulting in deleted sequence,
 		inserted sequence, and splitting of existing features
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/1/')
@@ -59,15 +64,25 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
-	def test_case_2(self):
+	def test_case_02(self):
 		"""
 		Case 2:
 		Indel resulting in truncating 3' side of feature.
 		Indel starts at position 2 of feature and ends at last position 
 		of feature. All but first position of original feature remains. 
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/2/')
@@ -102,15 +117,25 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
-	def test_case_3(self):
+	def test_case_03(self):
 		"""
 		Case 3:
 		Deletion resulting in removal of entire feature.
 		Deletion starts one base upstream of the feature and ends 
 		at last position of feature. 
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/3/')
@@ -145,13 +170,23 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
-	def test_case_4(self):
+	def test_case_04(self):
 		"""
 		Case 4:
 		Indel causing feature split. 
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/4/')
@@ -186,9 +221,14 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
-	def test_case_5(self):
+	def test_case_05(self):
 		"""
 		Case 5:
 		1-base deletion, 10 base insertion. 
@@ -196,6 +236,11 @@ class TestReform(unittest.TestCase):
 		truncation upstream side (5' side) of feature (first base), and the 
 		remainder of the feature to be offset 9 bases downstream. 
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/5/')
@@ -230,9 +275,14 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
-	def test_case_6(self):
+	def test_case_06(self):
 		"""
 		Case 6:
 		2 bp deletion, 10 bp insertion. 
@@ -240,6 +290,11 @@ class TestReform(unittest.TestCase):
 		Result is all existing features offset (down)
 		by 8 bases. 
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/6/')
@@ -274,15 +329,25 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
-	def test_case_7(self):
+	def test_case_07(self):
 		"""
 		Case 7:
 		Simple insertion using the position argument.
 		Insertion upstream of existing feature, will get
 		offset by length of insertion. 
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/7/')
@@ -316,13 +381,23 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 
-	def test_case_8(self):
+	def test_case_08(self):
 		"""
 		Case 8:
 		Testing truncating features on reverse strand
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/8/')
@@ -357,13 +432,23 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 
-	def test_case_9(self):
+	def test_case_09(self):
 		"""
 		Case 9:
 		Insertion using the position argument at position 0
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/9/')
@@ -397,6 +482,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
 	def test_case_10(self):
@@ -405,6 +495,11 @@ class TestReform(unittest.TestCase):
 		Insertion using the position argument at position -1 
 		(end of chromosome)
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/10/')
@@ -438,6 +533,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 		
 	def test_case_11(self):
@@ -445,6 +545,11 @@ class TestReform(unittest.TestCase):
 		Case 11:
 		Testing GTF3 comment format (all above are GTF)
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/11/')
@@ -478,6 +583,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 	
 
@@ -486,6 +596,11 @@ class TestReform(unittest.TestCase):
 		Case 12:
 		Testing Case 2 with .gz ref sequence input
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/12/')
@@ -520,6 +635,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 	
 	def test_case_13(self):
@@ -527,6 +647,11 @@ class TestReform(unittest.TestCase):
 		Case 13:
 		Testing Case 10 with .gz ref sequence input
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/13/')
@@ -560,6 +685,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 	
 	def test_case_14(self):
@@ -568,6 +698,11 @@ class TestReform(unittest.TestCase):
 		Testing Sequential Processing which use multiple up.fa and down.fa files
 		"""
 
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
 		wd = os.getcwd()
 		os.chdir('test_data/14/')
 
@@ -601,6 +736,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 
 
@@ -609,6 +749,11 @@ class TestReform(unittest.TestCase):
 		Case 15:
 		Testing Sequential Processing which combine test case 9, 10, 11
 		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
 		
 		wd = os.getcwd()
 		os.chdir('test_data/15/')
@@ -642,6 +787,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 	
 	def test_case_16(self):
@@ -650,6 +800,11 @@ class TestReform(unittest.TestCase):
 		Testing Reform which invalid chrom
 		"""
 
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
 		wd = os.getcwd()
 		os.chdir('test_data/16/')
 
@@ -682,6 +837,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+
 		os.chdir(wd)
 
 	def test_case_17(self):
@@ -690,6 +850,11 @@ class TestReform(unittest.TestCase):
 		Testing Reform which adding new chrom
 		"""
 
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
 		wd = os.getcwd()
 		os.chdir('test_data/17/')
 
@@ -721,6 +886,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+
 		os.chdir(wd)
 	
 	def test_case_18(self):
@@ -729,6 +899,11 @@ class TestReform(unittest.TestCase):
 		Testing Reform which adding multiple new chroms
 		"""
 
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
 		wd = os.getcwd()
 		os.chdir('test_data/18/')
 
@@ -760,6 +935,11 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+
 		os.chdir(wd)
 
 	def test_case_19(self):
@@ -769,6 +949,11 @@ class TestReform(unittest.TestCase):
   		and annotation files. Also, testing reform with more formal printing
 		"""
 
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
 		wd = os.getcwd()
 		os.chdir('test_data/19/')
 
@@ -800,6 +985,62 @@ class TestReform(unittest.TestCase):
 		self.assertListEqual(list(gold_fa), list(new_fa))
 		print("Done")
 
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+
+		os.chdir(wd)
+  
+	def test_case_20(self):
+		"""
+		Case 20:
+		Simple addition using the position argument.
+		Test auto correction for wrong input fasta name,
+		wrong input gtf name and length
+		"""
+		
+		print()
+		print("------------------------------------------")
+		print("Test Start")
+		print("------------------------------------------")
+		
+		wd = os.getcwd()
+		os.chdir('test_data/20/')
+		
+		command = """
+		python3 ../../reform.py \
+		--new_chrom="Y" \
+		--in_fasta=in.fa \
+		--in_gff=in.gtf \
+		--ref_fasta=ref.fa \
+		--ref_gff=ref.gtf \
+		"""
+
+		response = subprocess.getoutput(command)
+		print(response)
+	
+		with open('gold.gtf', 'r') as f:
+			gold_gff = f.read()
+		with open('ref_reformed.gtf', 'r') as f:
+			new_gff = f.read()
+		print("Testing GTF")
+		self.assertListEqual(list(gold_gff), list(new_gff))
+		print("Done")
+		
+		with open('gold.fa', 'r') as f:
+			gold_fa = f.read()
+		with open('ref_reformed.fa', 'r') as f:
+			new_fa = f.read()
+		print("Testing Fasta")
+		self.assertListEqual(list(gold_fa), list(new_fa))
+		print("Done")
+		
+		print("------------------------------------------")
+		print("Test Done")
+		print("------------------------------------------")
+		print()
+		
 		os.chdir(wd)
 
 if __name__ == '__main__':
