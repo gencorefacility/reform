@@ -7,11 +7,11 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 try:
-    import pgzip as gzip_module
-    print("\nUsing pgzip for gzip operations.\n")
+	import pgzip as gzip_module
+	print(f"\nUsing pgzip for gzip operations.\n")
 except ImportError:
-    import gzip as gzip_module
-    print("\npgzip not found, falling back to gzip.\n")
+	import gzip as gzip_module
+	print(f"\npgzip not found, falling back to gzip.\n")
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
 				add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 
 	print("------------------------------------------")
-	print("Reform Complete")
+	print(f"Reform Complete")
 	print("------------------------------------------")
 	print(f"New .fa file created:  {os.path.realpath(new_fasta)}")
 	print(f"New {annotation_ext} file created: {os.path.realpath(new_gff_path)}")
@@ -71,9 +71,8 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 		length_changed = len(str(record.seq)) - (down_position - position - 1)
 	prev_modifications.append((position,length_changed))
 	if position != down_position:
-		print("Removing nucleotides from position {} - {}".format(position, down_position))
-	print("Proceeding to insert sequence '{}' from {} at position {} on chromsome {}"
-		.format(record.description, in_arg.in_fasta[index], position, in_arg.chrom))
+		print(f"Removing nucleotides from position {position} - {down_position}")
+	print(f"Proceeding to insert sequence '{record.description}' from {in_arg.in_fasta[index]} at position {position} on chromosome {in_arg.chrom}")
 	## Build the new chromosome sequence with the inserted_seq 
 	## If the chromosome sequence length is in the header, replace it with new length
 	new_seq = existing_seq_str[:position] + str(record.seq) + existing_seq_str[down_position:]
@@ -207,7 +206,7 @@ def read_fasta(in_arg, index, prev_fasta_path):
 		raise ValueError(f"Error: {filename_fa} is not a valid FASTA file.")
 	except Exception as e:
 		raise ValueError(f"Error parsing FASTA file: {str(e)}")
-	print("Preparing to create new FASTA file")
+	print(f"Preparing to create new FASTA file")
 	print(f"Original FASTA: {real_path_fa}")
 	## Generate index of sequences from ref reference fasta
 	if prev_fasta_path:
@@ -290,14 +289,14 @@ def valid_gff_line(line_elements):
 	'''
 	if not line_elements[0].startswith("##sequence-region"):
 		if len(line_elements) != 9:
-			print("** ERROR: in_gff file does not have 9 columns, it has", len(line_elements))
+			print(f"** ERROR: in_gff file does not have 9 columns, it has {len(line_elements)}")
 			print(line_elements)
 			return False
 	else:
 		## Check if ##sequence-region line has 4 columns, the reason why use 5 here is because last element is
 		## spliting format indicator.
 		if len(line_elements) != 5:
-			print("** ERROR: ##sequence-region line does not have 4 columns, it has", len(line_elements) - 1)
+			print(f"** ERROR: ##sequence-region line does not have 4 columns, it has {len(line_elements) - 1}")
 			print(line_elements)
 			return False
 	return True
@@ -376,7 +375,7 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 				position += lc
 		if position > len(seq_str):
 			print("** ERROR: Position greater than length of chromosome.")
-			print("Chromosome: {}\Chromosome length: {}\nPosition: \n{}".format(chrom, len(seq_str), position))
+			print(f"Chromosome: {chrom}\nChromosome length: {len(seq_str)}\nPosition: {position}")
 			exit()
 		elif position == -1:
 			position = len(seq_str)
@@ -403,8 +402,8 @@ def get_position(index, positions, upstream, downstream, chrom, seq_str, prev_mo
 			else:
 				print("** ERROR: The upstream and downstream target sequences must be present and unique in the specified chromosome.")
 				print("Chromosome: {}\n".format(chrom))
-				print("Upstream sequence found {} times".format(upstream_seq_count))
-				print("Downstream sequence found {} times".format(downstream_seq_count))
+				print(f"Upstream sequence found {upstream_seq_count} times")
+				print(f"Downstream sequence found {downstream_seq_count} times")
 				exit()
 		else:
 			print("** ERROR: You must specify a valid position or upstream and downstream sequences.")
@@ -602,8 +601,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 					elif gff_feat_start <= position and gff_feat_end <= down_position:
 						# Which side of the feature depends on the strand (we add this as a comment)
 						x = "3" if gff_feat_strand == "+" else "5"
-						print("Feature cut off - {} prime side of feature cut off ({} strand)"
-							.format(x, gff_feat_strand))
+						print(f"Feature cut off - {x} prime side of feature cut off ({gff_feat_strand} strand)")
 						new_comment = format_comment(
 							"{} prime side of feature cut-off by inserted sequence".format(x),
 							gff_ext
@@ -631,8 +629,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 							and gff_feat_start <= down_position 
 							and gff_feat_end > down_position):
 							x = "5" if gff_feat_strand == "+" else "3"
-							print("Feature cut off - {} prime side of feature cut off ({} strand)"
-								.format(x, gff_feat_strand))
+							print(f"Feature cut off - {x} prime side of feature cut off ({gff_feat_strand} strand)")
 							new_comment = format_comment(
 								"{} prime side of feature cut-off by inserted sequence".format(x),
 								gff_ext
@@ -656,7 +653,7 @@ def create_new_gff(new_gff_name, ref_gff, in_gff_lines, position, down_position,
 							gff_out.write(modified_line)
 							
 						else:
-							print("** Error: Unknown case for GFF modification. Exiting " + str(line_elements))
+							print(f"** Error: Unknown case for GFF modification. Exiting {line_elements}")
 							exit()
 							
 			# If we've iterated over the entire original gff
@@ -738,7 +735,7 @@ def format_comment(comment, ext):
 	elif ext.lower().startswith('gff'):
 		new_comment = "; reform_comment={}".format(comment)
 	else:
-		print("** Error: Unrecognized extension {} in format_comment(). Exiting".format(ext))
+		print(f"** Error: Unrecognized extension {ext} in format_comment(). Exiting")
 		exit()
 	return new_comment
 	
@@ -750,15 +747,15 @@ def rename_id(line):
 	attributes = line.split('\t')[8].strip()
 	elements = attributes.split(';')
 	if elements[0].startswith("ID="):
-		print("Renaming split feature {} --> {}_split".format(elements[0], elements[0]))
+		print(f"Renaming split feature {elements[0]} --> {elements[0]}_split")
 		return ("{}_split;{}".format(elements[0], ';'.join(elements[1:])))
 	elif elements[0].startswith("gene_id "):
 		gene_id = re.match(r'gene_id \"(.+)\"', elements[0])[1]
-		print('Renaming split feature {} --> {}_split'.format(gene_id, gene_id))
+		print(f"Renaming split feature {gene_id} --> {gene_id}_split")
 		return ('gene _id "{}_split";{}'.format(gene_id, ';'.join(elements[1:])))
 
 	else:
-		print("This feature will not be renamed because it does not has an ID/gene_id attribute:\n", line)
+		print(f"This feature will not be renamed because it does not have an ID/gene_id attribute:\n{line}")
 		return attributes
 		
 def get_input_args():
