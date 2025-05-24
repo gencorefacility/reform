@@ -10,7 +10,6 @@ from Bio.SeqRecord import SeqRecord
 ## Importing gzip or pgzip module for file compression
 print("------------------------------------------")
 print(f"Compression Library Use:")
-print("------------------------------------------")
 try:
 	import pgzip as gzip_module
 	print(f"Using pgzip for gzip operations.")
@@ -25,8 +24,7 @@ def main():
 	
 	## Print reference file paths at start of process
 	print("------------------------------------------")
-	print(f"Path of Reference Files:")
-	print("------------------------------------------")
+	print(f"Path to Reference Files:")
 	print(f"Reference FASTA: {os.path.realpath(in_arg.ref_fasta)}")
 	print(f"Reference Annotation: {os.path.realpath(in_arg.ref_gff)}")
 
@@ -43,7 +41,7 @@ def main():
 		if hasattr(in_arg, 'chrom') and in_arg.chrom is not None:
 			## Modify existing chrom seq
 			print("-------------------------------------------")
-			print(f"Begin modification from in{index+1}.fa")
+			print(f"Begin modification from {in_arg.in_fasta[index]}")
 			print("-------------------------------------------")
 			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
 				modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, \
@@ -51,16 +49,16 @@ def main():
 		else:
 			## Add new chrom seq
 			print("-------------------------------------------")
-			print(f"Begin adding a new chromosome from in{index+1}.fa")
+			print(f"Begin adding a new chromosome from {in_arg.in_fasta[index]}")
 			print("-------------------------------------------")
 			new_fasta, annotation_ext, new_gff_path, prev_fasta_path, prev_gff_path = \
 				add_new_chrom_seq(in_arg, index, prev_fasta_path, prev_gff_path, iterations)
 
 	print("------------------------------------------")
 	print(f"Reform Complete")
-	print("------------------------------------------")
 	print(f"New .fa file created:  {os.path.realpath(new_fasta)}")
 	print(f"New {annotation_ext} file created: {os.path.realpath(new_gff_path)}")
+	print("------------------------------------------")
 
 def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications, iterations, prev_gff_path):
 	"""
@@ -87,7 +85,7 @@ def modify_existing_chrom_seq(in_arg, index, prev_fasta_path, prev_modifications
 	prev_modifications.append((position,length_changed))
 	if position != down_position:
 		print(f"Removing nucleotides from position {position} - {down_position}")
-	print(f"Proceeding to insert sequence '{record.description}' from {in_arg.in_fasta[index]} at position {position} on chromosome {in_arg.chrom}")
+	print(f"Proceeding to insert sequence '{record.description.strip()}' from {in_arg.in_fasta[index]} at position {position} on chromosome {in_arg.chrom}")
 	## Build the new chromosome sequence with the inserted_seq 
 	## If the chromosome sequence length is in the header, replace it with new length
 	new_seq = existing_seq_str[:position] + str(record.seq) + existing_seq_str[down_position:]
@@ -218,7 +216,7 @@ def read_fasta(in_arg, index, prev_fasta_path):
 	except Exception as e:
 		raise ValueError(f"Error parsing FASTA file: {str(e)}")
 	print(f"Preparing to create new FASTA file")
-	print(f"Original Input FASTA: {real_path_fa}")
+	print(f"Input FASTA: {real_path_fa}")
 	## Generate index of sequences from ref reference fasta
 	if prev_fasta_path:
 		chrom_seqs = index_fasta(prev_fasta_path)
@@ -236,7 +234,7 @@ def check_gff(in_arg, index):
 		raise FileNotFoundError(f"Error: File {filename_gff} does not exist.")
 	real_path_gff = os.path.realpath(filename_gff)
 	print("Preparing to create new annotation file")
-	print(f"Original Input Annotation: {real_path_gff}")
+	print(f"Input Annotation: {real_path_gff}")
 	print() ### print new line
 
 def index_fasta(fasta_path):
@@ -361,8 +359,8 @@ def get_in_gff_lines(in_gff=None, existing_chrom=None, new_chrom=None, sequence_
 				line_elements = line.split('\t')
 				chorme_id = existing_chrom if existing_chrom else new_chrom
 				if line_elements[0] != chorme_id:
-					print("** Warning: The chromosome name in the GFF file does not match the new chromosome name.")
-					print(f"Correct the chromosome name {line_elements[0]} to {chorme_id}")
+					print(f"** Warning: Mismatch detected between chromosome name in input annotation ({line_elements[0]}) and command line parameter ({chorme_id}).")
+					print(f"Using command line chromosome name: {chorme_id}")
 					line_elements[0] = chorme_id
 				if not valid_gff_line(line_elements):
 					exit()
@@ -443,7 +441,7 @@ def calculate_new_length_for_in_gff(in_gff_lines, position, sequence_length):
 			## l[3] is start position of fasta in in.gtf and l[4] is end position
 			seq_id = l[0]
 			if int(l[4]) - int(l[3]) + 1 != sequence_length:
-				print(f"** WARNING: Inconsistent length for {seq_id}. Correcting start position to 1 and end position to {sequence_length}.")
+				print(f"** WARNING: Annotation start and end positions do not match the sequence length in the FASTA input. Adjusting to match the input sequence: start=1, end={sequence_length}.\n→ Affected annotation: {in_gff_lines}")
 			## Correct start(l[3]) to 1 and end(l[4]) to length of insert fasta
 			new_gff_line = modify_gff_line(
 				l, start=1 + position, end=sequence_length + position)
@@ -829,7 +827,7 @@ def get_input_args():
 	in_args.in_fasta = in_args.in_fasta.split(',')
 	in_args.in_gff = in_args.in_gff.split(',')
 	if (len(in_args.in_fasta) != len(in_args.in_gff)):
-		print("** Error: The number of inserted FASTA files does not match the number of GTF files, or their counts and positions do not align.")
+		print("** Error: The number of inserted FASTA files does not match the number of annotation files, or their counts and positions do not align.")
 		exit()
 	else:
 		iterations = len(in_args.in_fasta)
@@ -864,7 +862,7 @@ def get_input_args():
 			parser.error("** Error: When using --new_chrom, you cannot provide --position, --upstream_fasta, or --downstream_fasta.")
 			exit()
 		## Convert new_chrom from string to list
-		in_args.new_chrom = in_args.new_chrom.split(',')
+		in_args.new_chrom = [x.strip() for x in in_args.new_chrom.split(',')]
 	
 	return in_args, iterations
 	
