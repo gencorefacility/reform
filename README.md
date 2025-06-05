@@ -1,60 +1,113 @@
 # <i>ref</i>orm
 
-[*ref*orm](https://gencore.bio.nyu.edu/reform/) is a python-based command line tool that allows for fast, easy and robust editing of reference genome sequence and annotation files.
+[*ref*orm](https://gencore.bio.nyu.edu//) is a Python-based command-line tool for fast, robust, and flexible editing of reference genome sequence and annotation files.
 
-Execution of *ref*orm requires a reference sequence (fasta), reference annotation (GFF or GTF), the novel sequences to be added (fasta), and corresponding novel annotations (GFF or GTF). A user provides as arguments the name of the modified chromosome and either the position at which the novel sequence is inserted, or the upstream and downstream sequences flanking the novel sequences. This results in the addition and/or deletion of sequence from the reference in the modified fasta file. In addition to the novel annotations, any changes to the reference annotations that result from deleted or interrupted sequence are incorporated into the modified gff.  Importantly, modified gff and fasta files include a record of the modifications.
+To perform an edit, *ref*orm requires a reference genome (FASTA), its annotation file (GFF or GTF), a novel sequence to be inserted (FASTA), and the corresponding annotation (GFF or GTF). The user specifies either:
+
+- the chromosome and the position at which to insert the novel sequence, or
+- the chromosome along with the upstream and downstream flanking sequences.
+
+The result is a modified reference genome (FASTA) and annotation file (GFF), incorporating the novel sequence and its annotations. Any reference annotations affected by the insertion or deletion are automatically updated. All modifications are documented within the output files.
+
+In addition to modifying existing chromosomes, *ref*orm also supports appending entirely new chromosomes. In this mode, users provide the novel chromosome’s sequence and annotations, which are added to the reference genome and integrated into the annotation file.
 
 Learn more at https://gencore.bio.nyu.edu/reform/
 
 ## Usage
 
-*ref*orm requires Python3, pgzip and Biopython v1.78 or higher. 
+*ref*orm requires Python3 and Biopython v1.78 or higher. 
 
-Install pgzip and biopython if you don't already have it:
+Install biopython if you don't already have it:
 
-`pip install pgzip biopython>=1.78`
+`pip install biopython>=1.78`
+
+*ref*orm supports reading and writing .gz files using gzip. To accelerate compression and decompression, it optionally supports pgzip, a parallel implementation of gzip. Users must install pgzip separately to enable this feature.
+
+*Optional:* Install pgzip if you don't already have it:
+
+`pip install pgzip`   
 
 Invoke the python script:
 
 ```
-python3 reform.py 
+### Minimal Example (Single Edit)
+python3 reform.py \
   --chrom=<chrom> \
-  --position=<pos> \ 
-  --in_fasta=<in_fasta> \
-  --in_gff=<in_gff> \
-  --ref_fasta=<ref_fasta> \
-  --ref_gff=<ref_gff>
+  --position=<position> \
+  --in_fasta=<input_fasta.fa> \
+  --in_gff=<input_annotations.gff> \
+  --ref_fasta=<reference_genome.fa> \
+  --ref_gff=<reference_annotations.gff3>
 ```
 
 ## Parameters
 
-`chrom` ID of the chromsome to modify
+- `chrom`: ID of the chromosome to **modify**. **Required** unless `new_chrom` is specified. Cannot be used together with `new_chrom`.
 
-`position` Position in chromosome at which to insert <in_fasta>. Can use `-1` to add to end of chromosome. Note: Either position, or upstream AND downstream sequence must be provided. **Note: Position is 0-based**
+- `new_chrom`: ID of the novel chromosome to **append**. **Required** if you're adding a new chromosome. Cannot be used together with `chrom`.
 
-`upstream_fasta` Path to Fasta file with upstream sequence. Note: Either position, or upstream AND downstream sequence must be provided.
+- `position`: 0-based insertion position(s) in the reference chromosome where `in_fasta` should be inserted. Use `-1` to insert at the end of the chromosome. For **multiple edits**, provide a comma-separated list (e.g., `0,5,-1`). **Note:** Either `position`, or both `upstream_fasta` and `downstream_fasta`, must be provided.
 
-`downstream_fasta` Path to Fasta file with downstream sequence. Note: Either position, or upstream AND downstream sequence must be provided.
+- `upstream_fasta`: Path(s) to FASTA file(s) containing the upstream flanking sequence(s) for insertion. For **multiple edits**, provide a comma-separated list (e.g., `up1.fa,up2.fa,up3.fa`). Must be used with `downstream_fasta`. Cannot be used together with `position`.
 
-`in_fasta` Path to new sequence to be inserted into reference genome in fasta format.
+- `downstream_fasta`: Path(s) to FASTA file(s) containing the downstream flanking sequence(s) for insertion. For **multiple edits**, provide a comma-separated list (e.g., `down1.fa,down2.fa,down3.fa`). Must be used with `upstream_fasta`. Cannot be used together with `position`.
 
-`in_gff` Path to GFF file describing new fasta sequence to be inserted.
+- `in_fasta`: Path(s) to FASTA file(s) containing the new sequence(s) to insert. For multiple edits, provide a comma-separated list. **The number of entries must match the number of `position` values or the number of upstream/downstream pairs.**
 
-`ref_fasta` Path to reference fasta file.
+- `in_gff`: Path(s) to GFF3 file(s) describing the `in_fasta` sequence(s). For multiple edits, provide a comma-separated list. **The number of entries must match the number of `in_fasta` files.**
 
-`ref_gff` Path to reference gff file.
+- `ref_fasta` Path to the reference genome FASTA file.
 
-## Example
+- `ref_gff` Path to the reference genome annotation (GFF3 or GTF) file.
+
+## Examples
+
+### Single Edit by Position
 
 ```
-python3 reform.py 
+python3 reform.py \
+  --chrom="I" \
+  --position=1500 \
+  --in_fasta="data/edit.fa" \
+  --in_gff="data/edit.gff" \
+  --ref_fasta="data/ref.fa" \
+  --ref_gff="data/ref.gff3"
+```
+
+### Single Edit with Upstream/Downstream Flanks
+
+```
+python3 reform.py \
   --chrom="I" \
   --upstream_fasta="data/up.fa" \
   --downstream_fasta="data/down.fa" \
-  --in_fasta="data/new.fa" \
-  --in_gff="data/new.gff" \
-  --ref_fasta="data/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa" \
-  --ref_gff="data/Saccharomyces_cerevisiae.R64-1-1.34.gff3"
+  --in_fasta="data/edit.fa" \
+  --in_gff="data/edit.gff" \
+  --ref_fasta="data/ref.fa" \
+  --ref_gff="data/ref.gff3"
+```
+
+### Batch Edits (Multiple Positions)
+
+```
+python3 reform.py \
+  --chrom="I" \
+  --position=1000,2500,3000 \
+  --in_fasta="data/edit1.fa,data/edit2.fa,data/edit3.fa" \
+  --in_gff="data/edit1.gff,data/edit2.gff,data/edit3.gff" \
+  --ref_fasta="data/ref.fa" \
+  --ref_gff="data/ref.gff3"
+```
+
+### Append a Novel Chromosome
+
+```
+python3 reform.py \
+  --new_chrom="new_chr1" \
+  --in_fasta="data/new1.fa" \
+  --in_gff="data/new1.gff" \
+  --ref_fasta="data/ref.fa" \
+  --ref_gff="data/ref.gff3"
 ```
 
 ## Output
@@ -63,3 +116,11 @@ python3 reform.py
 
 `reformed.gff3` Modified GFF file.
 
+## Tests
+After local deployment or modification, you can run `test_reform.py` to verify the functionality of *ref*orm. This script contains an automated test suite built with Python’s `unittest` framework and validates *ref*orm across a range of genome editing scenarios.
+
+To run all tests:
+
+```bash
+python3 test_.py
+```
