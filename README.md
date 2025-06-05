@@ -122,5 +122,5 @@ After local deployment or modification, you can run `test_reform.py` to verify t
 To run all tests:
 
 ```bash
-python3 test_.py
+python3 test_reform.py
 ```
