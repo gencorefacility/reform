@@ -124,3 +124,21 @@ To run all tests:
 ```bash
 python3 test_reform.py
 ```
+
+## How to Cite
+
+If you use *ref*orm in your research, please cite the GitHub repository:
+
+> *ref*orm: https://github.com/gencorefacility/reform
+
+You may also cite our article:
+
+> Mohammed Khalfan\*, Eric Borenstein, Pieter Spealman, Farah Abdul-Rahman, and David Gresham\* (2021).  
+> *Modifying Reference Sequence and Annotation Files Quickly and Reproducibly with reform*.
+
+This article was published — to our knowledge — as the first scientific research article minted as a non-fungible token (NFT):
+
+- 📄 [Read the full PDF](https://gencore.bio.nyu.edu/wp-content/uploads/2021/07/reform.pdf)  
+- 🖼️ [View NFT on OpenSea](https://opensea.io/item/ethereum/0x495f947276749ce646f68ac8c248420045cb7b5e/89295771465272658208657695219245348516590738176651091797615877953749424013313)
+
+
