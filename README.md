@@ -141,4 +141,47 @@ This article was published — to our knowledge — as the first scientific rese
 - 📄 [Read the full PDF](https://gencore.bio.nyu.edu/wp-content/uploads/2021/07/reform.pdf)  
 - 🖼️ [View NFT on OpenSea](https://opensea.io/item/ethereum/0x495f947276749ce646f68ac8c248420045cb7b5e/89295771465272658208657695219245348516590738176651091797615877953749424013313)
 
+## Selected Publications Using *ref*orm
+
+*ref*orm has been used in a range of peer-reviewed studies across genomics, gene regulation, and therapeutic genome editing. Below are selected examples:
+
+### 🧬 High-Quality Genome Assembly in Sweet Corn
+
+In a Nature Communications study, *ref*orm was used to integrate edited and merged sequences into a final hybrid assembly (~2.32 Gb) of the sweet corn inbred line Ia453-sh2, improving genome accuracy and reducing manual curation.
+
+**Hu et al., 2021**  
+*Genome Assembly and Population Genomic Analysis Provide Insights into the Evolution of Modern Sweet Corn*  
+[https://doi.org/10.1038/s41467-021-21380-4](https://doi.org/10.1038/s41467-021-21380-4)
+
+---
+
+### 🧪 Synthetic Enhancer Analysis in Mouse Stem Cells
+
+A Molecular Cell paper used *ref*orm to build precise custom genome assemblies in mouse ES cells with synthetic enhancers, enabling accurate annotation of reporter insertion sites and enhancer interactions.
+
+**Thomas et al., 2025**  
+*Enhancer Cooperativity Can Compensate for Loss of Activity over Large Genomic Distances*  
+[https://doi.org/10.1016/j.molcel.2024.11.008](https://doi.org/10.1016/j.molcel.2024.11.008)
+
+---
+
+### 🧬 Genome Editing for Cystic Fibrosis
+
+In research on stem cell therapies for cystic fibrosis, *ref*orm was used to validate genome edits in patient-derived airway basal cells, supporting the development of personalized treatments.
+
+**Suzuki et al., 2020**  
+*Highly Efficient Gene Editing of Cystic Fibrosis Patient-Derived Airway Basal Cells*  
+[https://doi.org/10.1016/j.ymthe.2020.04.021](https://doi.org/10.1016/j.ymthe.2020.04.021)
+
+---
+
+### 📚 Additional Publications
+
+- [Chakraborty et al., *Developmental Cell*, 2025](https://doi.org/10.1016/j.devcel.2025.02.002)  
+- [Pinto et al., *bioRxiv*, 2022](https://doi.org/10.1101/2022.08.29.505755)  
+- [Nicoletto et al., *NAR*, 2024](https://doi.org/10.1093/nar/gkae797)  
+- [Lanciano et al., *bioRxiv*, 2023](https://doi.org/10.1101/2023.01.03.522582)  
+- [Egorov et al., *NAR*, 2021](https://doi.org/10.1093/nar/gkab872)  
+- [Vignogna et al., *eLife*, 2022](https://doi.org/10.7554/eLife.79346)  
+- [Sarkar et al., *Springer Protocols*, 2023](https://doi.org/10.1007/978-1-0716-2883-6_10)
 
