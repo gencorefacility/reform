@@ -133,7 +133,7 @@ If you use *ref*orm in your research, please cite the GitHub repository:
 
 You may also cite our article:
 
-> Mohammed Khalfan\*, Eric Borenstein, Pieter Spealman, Farah Abdul-Rahman, and David Gresham\* (2021).  
+> Mohammed Khalfan, Eric Borenstein, Pieter Spealman, Farah Abdul-Rahman, and David Gresham (2021).  
 > *Modifying Reference Sequence and Annotation Files Quickly and Reproducibly with reform*.
 
 This article was published — to our knowledge — as the first scientific research article minted as a non-fungible token (NFT):
