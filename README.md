@@ -184,4 +184,6 @@ In research on stem cell therapies for cystic fibrosis, *ref*orm was used to val
 - [Egorov et al., *NAR*, 2021](https://doi.org/10.1093/nar/gkab872)  
 - [Vignogna et al., *eLife*, 2022](https://doi.org/10.7554/eLife.79346)  
 - [Sarkar et al., *Springer Protocols*, 2023](https://doi.org/10.1007/978-1-0716-2883-6_10)
+- [Graham et al., *Adv. Funct. Mater.*, 2026](https://doi.org/10.1002/adfm.202501532)
+- [Mackenroth & Alani, *bioRxiv*, 2025](https://doi.org/10.1101/2025.05.22.655457)
 
