@@ -248,8 +248,8 @@ def index_fasta(fasta_path):
 		## Create a tempfile to store uncompressde content
 		with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_f:
 			tmp_f_path = tmp_f.name
-			## Use pgzip or gzip to decompress parallely. Set thread=None means use all cores
-			with gzip_module.open(fasta_path, 'rt', thread=None) as f:
+			## Decompress with pgzip (parallel, when available) or the stdlib gzip fallback.
+			with gzip_module.open(fasta_path, 'rt') as f:
 				tmp_f.write(f.read())
 		chrom_seqs = SeqIO.index(tmp_f_path, 'fasta')
         ## remove temp file
